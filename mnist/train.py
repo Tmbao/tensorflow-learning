@@ -3,7 +3,7 @@ import numpy as np
 import sklearn.metrics as metrics
 from datetime import datetime
 
-from model import MNISTSimple
+from model import MNISTSimple, MNISTCNN
 from data import Data
 from saver import Saver
 from summarizer import ScalarSummarizer
@@ -17,9 +17,9 @@ tf.app.flags.DEFINE_string('summary_dir', '', 'Summary directory')
 tf.app.flags.DEFINE_integer('max_to_keep', 100, 'Maximum number of checkpoints')
 tf.app.flags.DEFINE_boolean('verbose', False, 'Verbose')
 tf.app.flags.DEFINE_float('learning_rate', 0.001, 'Learning rate')
-tf.app.flags.DEFINE_integer('log_period', 20, 'Log period')
-tf.app.flags.DEFINE_integer('val_period', 1000, 'Validation period')
-tf.app.flags.DEFINE_integer('save_period', 10000, 'Validation period')
+tf.app.flags.DEFINE_integer('log_period', 10, 'Log period')
+tf.app.flags.DEFINE_integer('val_period', 200, 'Validation period')
+tf.app.flags.DEFINE_integer('save_period', 500, 'Validation period')
 
 
 def log(message):
@@ -49,7 +49,7 @@ def train(train_data, valid_data,
     labels = tf.placeholder('float32', shape=(None, 10), name='label')
 
     # Declare some tensors
-    mnist = MNISTSimple(learning_rate)
+    mnist = MNISTCNN(learning_rate)
     logits = mnist.logits(images)
     loss = mnist.loss(logits, labels)
     train_op = mnist.train(loss, tf.Variable(start_step, trainable=False), train_size)
@@ -68,7 +68,7 @@ def train(train_data, valid_data,
 
       for b_images, b_labels in train_data.batches(batch_size):
 
-        food = {images: b_images, labels: b_labels}
+        food = {images: b_images, labels: b_labels, 'keep_prob:0': 0.5}
         _, pred_vals, loss_val = sess.run([train_op, classify, loss], feed_dict=food)
 
         # Print out information of the current step
@@ -80,7 +80,8 @@ def train(train_data, valid_data,
           val_expects = np.argmax(valid_data.labels(), 1)
           val_predicts, val_loss = sess.run([classify, loss], feed_dict={
             images: valid_data.images(),
-            labels: valid_data.labels()}) 
+            labels: valid_data.labels(),
+            'keep_prob:0': 1}) 
 
           val_corrects = np.equal(val_predicts[:len(val_expects)], val_expects)
           val_acc = np.mean(val_corrects)
