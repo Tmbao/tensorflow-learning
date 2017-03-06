@@ -1,6 +1,5 @@
 import tensorflow as tf
 import numpy as np
-import sklearn.metrics as metrics
 from datetime import datetime
 
 from model import MNISTSimple, MNISTCNN
