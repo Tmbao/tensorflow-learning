@@ -2,7 +2,6 @@ import os
 import numpy as np
 
 
-
 class Data:
     def __init__(self, prefix, tag):
         self._images = self._load_images(os.path.join(prefix, tag, 'images'))

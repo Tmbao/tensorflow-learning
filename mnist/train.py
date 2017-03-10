@@ -12,6 +12,8 @@ FLAGS = tf.app.flags.FLAGS
 tf.app.flags.DEFINE_string('data_dir', '', 'Data directory')
 tf.app.flags.DEFINE_integer('batch_size', 100, 'Batch size')
 tf.app.flags.DEFINE_string('chkpnt_dir', '', 'Check-point directory')
+tf.app.flags.DEFINE_string('from_chkpnt', None, 'Start training from a \
+        checkpoint')
 tf.app.flags.DEFINE_string('summary_dir', '', 'Summary directory')
 tf.app.flags.DEFINE_integer('max_to_keep', 100, 'Maximum number of checkpoints')
 tf.app.flags.DEFINE_boolean('verbose', False, 'Verbose')
@@ -30,6 +32,7 @@ def train(train_data,
           valid_data,
           saver,
           summ,
+          from_chkpnt,
           batch_size,
           learning_rate,
           log_period,
@@ -55,11 +58,22 @@ def train(train_data,
         train_op = mnist.train(loss, tf.Variable(start_step, trainable=False), train_size)
         classify = mnist.classify(logits)
 
-        saver.init()
-
         # Create a new session
         sess = tf.Session()
-        sess.run(tf.global_variables_initializer())
+
+        if from_chkpnt == None:
+            log('initializing the model')
+            sess.run(tf.global_variables_initializer())
+            saver.init()
+        else:
+            log('loading the latest checkpoint')
+            saver.restore(sess, from_chkpnt)
+
+
+        test_val = tf.Variable(tf.constant(0, shape=[2]))
+        sess.run(test_val.assign(np.array([1, 2])))
+        with sess.as_default():
+            print test_val.eval().type
 
         # Start training
         step = start_step
@@ -114,10 +128,11 @@ def main():
     train_data = Data(FLAGS.data_dir, tag='train')
     valid_data = Data(FLAGS.data_dir, tag='valid')
     train(train_data, valid_data, 
-        Saver(FLAGS.chkpnt_dir, FLAGS.max_to_keep),
+        Saver(FLAGS.chkpnt_dir, max_to_keep=FLAGS.max_to_keep),
         ScalarSummarizer(FLAGS.summary_dir, {
             'validation_loss': 'float32',
             'validation_accuracy': 'float32'}),
+        FLAGS.from_chkpnt,
         FLAGS.batch_size, 
         FLAGS.learning_rate,
         FLAGS.log_period,

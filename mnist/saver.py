@@ -3,8 +3,10 @@ import tensorflow as tf
 
 
 class Saver:
-    def __init__(self, chkpnt_dir, max_to_keep):
-        self._chkpnt_path = os.path.join(chkpnt_dir, 'model.ckpt')
+    def __init__(self, chkpnt_dir, ckhpnt_name='model.ckpt', max_to_keep=1000):
+        self._chkpnt_name = ckhpnt_name
+        self._chkpnt_dir = chkpnt_dir
+        self._chkpnt_path = os.path.join(chkpnt_dir, self._chkpnt_name)
         self._max_to_keep = max_to_keep
         
     def init(self):
@@ -12,3 +14,8 @@ class Saver:
 
     def save(self, sess, step):
         self._saver.save(sess, self._chkpnt_path, global_step=step)
+
+    def restore(self, sess, chkpnt_name):
+        self._saver = tf.train.import_meta_graph(chkpnt_name + '.meta')
+        self._saver.restore(sess, chkpnt_name)
+
