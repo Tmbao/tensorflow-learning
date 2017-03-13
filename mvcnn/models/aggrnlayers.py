@@ -78,7 +78,7 @@ class AggregatorNN(NN):
         return AggregatorNN(variables, name)
 
 
-    def outputs(self, inputs):
+    def forward(self, inputs):
         result = inputs
         no_layers = len(self._variables) / 2
         for i in range(1, no_layers + 1):

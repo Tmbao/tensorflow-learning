@@ -22,7 +22,7 @@ tf.app.flags.DEFINE_string("view_wei", None,
         "Pre-trained weights for view CNNs")
 tf.app.flags.DEFINE_integer("from_step", 0, 
         "Continue training from a checkpoint")
-tf.app.flags.DEFINE_integer("batch_size", 1, "Batch size")
+tf.app.flags.DEFINE_integer("batch_size", 100, "Batch size")
 tf.app.flags.DEFINE_float("learning_rate", 0.001, "Learning rate")
 tf.app.flags.DEFINE_integer("log_period", 10, "Log period")
 tf.app.flags.DEFINE_integer("val_period", 200, "Validation period")
@@ -90,7 +90,7 @@ def _train(
                 AggregatorNN.create_model,
                 AggregatorNN.create_variables(),
                 no_views)
-        outputs = nn.outputs(inputs)
+        outputs = nn.forward(inputs)
         loss = _loss(outputs, labels)
         trainer = _trainer(loss, tf.Variable(step, trainable=False),
                 learning_rate)

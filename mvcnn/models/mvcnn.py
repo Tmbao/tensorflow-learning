@@ -52,7 +52,7 @@ class MVCNN:
         self._aggr.save(sess, directory)
 
 
-    def outputs(self, inputs):
+    def forward(self, inputs):
         """
         Get an output tensor for inputs.
 
@@ -62,9 +62,9 @@ class MVCNN:
         Returns:
             An output tensor.
         """
-        view_outputs = [self._views[i].outputs(inputs[i]) 
+        view_outputs = [self._views[i].forward(inputs[i]) 
                 for i in xrange(self._no_views)]
         concatenated_outputs = tf.concat([tf.expand_dims(view_output, 0) 
             for view_output in view_outputs], 0)
         view_pooling = tf.reduce_max(concatenated_outputs, [0])
-        return self._aggr.outputs(view_pooling)
+        return self._aggr.forward(view_pooling)

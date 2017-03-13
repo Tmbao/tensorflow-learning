@@ -34,17 +34,19 @@ class VGG16(NN):
 
         def _load_variables():
             data = np.load(from_file)
-            keys = sorted(data.keys())
-            idx = 0
+            class Local:
+                keys = sorted(data.keys())
+                idx = 0
             
             def _weight_variable(shape):
-                init = tf.constant(data[keys[idx]])
-                idx += 1
+
+                init = tf.constant(data[Local.keys[Local.idx]])
+                Local.idx += 1
                 return tf.Variable(init)
 
             def _bias_variable(shape):
-                init = tf.constant(data[keys[idx]])
-                idx += 1
+                init = tf.constant(data[Local.keys[Local.idx]])
+                Local.idx += 1
                 return tf.Variable(init)
 
             return _weight_variable, _bias_variable
@@ -117,7 +119,7 @@ class VGG16(NN):
         return VGG16(variables, name)
 
     
-    def outputs(self, inputs):
+    def forward(self, inputs):
         """
         Get an output tensor corresponding to the input tensor.
 
