@@ -12,7 +12,7 @@ class VGG16(NN):
     produces an output vector of 1000 dimensions.
     """
     @staticmethod
-    def create_variables(from_file=None):
+    def create_variables(from_file=None, trainable=True):
         """
         Create all variables for VGG16.
 
@@ -39,15 +39,20 @@ class VGG16(NN):
                 idx = 0
             
             def _weight_variable(shape):
-
                 init = tf.constant(data[Local.keys[Local.idx]])
                 Local.idx += 1
-                return tf.Variable(init)
+                if not trainable:
+                    return init
+                else:
+                    return tf.Variable(init)
 
             def _bias_variable(shape):
                 init = tf.constant(data[Local.keys[Local.idx]])
                 Local.idx += 1
-                return tf.Variable(init)
+                if not trainable:
+                    return init
+                else:
+                    return tf.Variable(init)
 
             return _weight_variable, _bias_variable
 

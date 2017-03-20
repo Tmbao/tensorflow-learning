@@ -24,9 +24,9 @@ tf.app.flags.DEFINE_integer("from_step", 0,
         "Continue training from a checkpoint")
 tf.app.flags.DEFINE_integer("batch_size", 100, "Batch size")
 tf.app.flags.DEFINE_float("learning_rate", 0.001, "Learning rate")
-tf.app.flags.DEFINE_integer("log_period", 10, "Log period")
-tf.app.flags.DEFINE_integer("val_period", 200, "Validation period")
-tf.app.flags.DEFINE_integer("save_period", 200, "Saving period")
+tf.app.flags.DEFINE_integer("log_period", 5, "Log period")
+tf.app.flags.DEFINE_integer("val_period", 20, "Validation period")
+tf.app.flags.DEFINE_integer("save_period", 10, "Saving period")
 tf.app.flags.DEFINE_integer("no_epoch", 100, "Number of epoches")
 tf.app.flags.DEFINE_boolean("verbose", False, "Verbose mode")
 
@@ -86,7 +86,7 @@ def _train(
         # Tensors
         nn = MVCNN(
                 VGG16.create_model,
-                VGG16.create_variables(view_wei),
+                VGG16.create_variables(view_wei, trainable=False),
                 AggregatorNN.create_model,
                 AggregatorNN.create_variables(),
                 no_views)
@@ -121,7 +121,7 @@ def _train(
                     _log("-TRAIN- step={}, loss={}".format(step, loss_val))
 
                 # Perform validation
-                if step % val_period == 0:
+                if step > 0 and step % val_period == 0:
                     _log("-VALID- start")
                     val_expects = []
                     val_predicts = []
@@ -147,7 +147,7 @@ def _train(
 
                     summ.log({
                         "validation_loss": val_loss,
-                        "validation_accuracy": val_acc
+                        "validation_acc": val_acc
                         }, step)
 
                 # Save the current model
