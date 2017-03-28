@@ -41,18 +41,12 @@ class VGG16(NN):
             def _weight_variable(shape):
                 init = tf.constant(data[Local.keys[Local.idx]])
                 Local.idx += 1
-                if not trainable:
-                    return init
-                else:
-                    return tf.Variable(init)
+                return tf.Variable(init, trainable=trainable)
 
             def _bias_variable(shape):
                 init = tf.constant(data[Local.keys[Local.idx]])
                 Local.idx += 1
-                if not trainable:
-                    return init
-                else:
-                    return tf.Variable(init)
+                return tf.Variable(init, trainable=trainable)
 
             return _weight_variable, _bias_variable
 
@@ -99,14 +93,6 @@ class VGG16(NN):
         variables["52b"] = _bias_variable([512])
         variables["53K"] = _weight_variable([3, 3, 512, 512])
         variables["53b"] = _bias_variable([512])
-
-        # 3 fully connected
-        variables["6W"] = _weight_variable([7 * 7 * 512, 4096])
-        variables["6b"] = _bias_variable([4096])
-        variables["7W"] = _weight_variable([4096, 4096])
-        variables["7b"] = _bias_variable([4096])
-        variables["8W"] = _weight_variable([4096, 1000])
-        variables["8b"] = _weight_variable([1000])
 
         return variables
 
@@ -203,16 +189,4 @@ class VGG16(NN):
                 _get_variable("53b"))
         pool5 = _apply_pooling(conv53)
 
-        flat =  tf.reshape(pool5, [-1, 7 * 7 * 512])
-
-        fc1 = _apply_fc_relu(flat,
-                _get_variable("6W"),
-                _get_variable("6b"))
-        fc2 = _apply_fc_relu(fc1,
-                _get_variable("7W"),
-                _get_variable("7b"))
-        fc3 = _apply_fc_relu(fc2,
-                _get_variable("8W"),
-                _get_variable("8b"))
-
-        return fc3
+        return pool5

@@ -3,8 +3,8 @@ import numpy as np
 import os
 
 from models.mvcnn import MVCNN
-from models.vgg16 import VGG16
-from models.aggrnlayers import AggregatorNN
+from models.vgg16_7_7_512 import VGG16
+from models.cnnaggregator import Aggregator
 from summarizer import ScalarSummarizer
 from data import Data
 
@@ -81,14 +81,14 @@ def _train(
         # Place holders
         inputs = [tf.placeholder("float32", shape=(None, 224, 224, 3),
             name="i{}".format(i)) for i in xrange(no_views)]
-        labels = tf.placeholder("float32", shape=(None, 1000))
+        labels = tf.placeholder("float32", shape=(None, 16))
 
         # Tensors
         nn = MVCNN(
                 VGG16.create_model,
-                VGG16.create_variables(view_wei, trainable=False),
-                AggregatorNN.create_model,
-                AggregatorNN.create_variables(),
+                VGG16.create_variables(view_wei, trainable=True),
+                Aggregator.create_model,
+                Aggregator.create_variables(),
                 no_views)
         outputs = nn.forward(inputs)
         loss = _loss(outputs, labels)
@@ -96,10 +96,9 @@ def _train(
                 learning_rate)
         infer = _infer(outputs)
 
-        if from_step == 0:
-            _log("initializing the model")
-            sess.run(tf.global_variables_initializer())
-        else:
+        _log("initializing the model")
+        sess.run(tf.global_variables_initializer())
+        if from_step > 0:
             _log("restoring the model")
             nn.restore(sess, os.path.join(chkpnt_dir, str(from_step)))
 
@@ -108,7 +107,7 @@ def _train(
 
             for b_inputs, b_labels in train_dat.batches(batch_size):
                 # Create food
-                food = {labels: b_labels}
+                food = {labels: b_labels, 'keep_prob:0': 0.5}
                 for i in xrange(no_views):
                     food["i{}:0".format(i)] = b_inputs[i]
                 
@@ -120,14 +119,24 @@ def _train(
                 if step % log_period == 0:
                     _log("-TRAIN- step={}, loss={}".format(step, loss_val))
 
+                # Save the current model
+                if step % save_period == 0:
+                    _log("-SAVE- start")
+                    saving_dir = os.path.join(chkpnt_dir, str(step))
+                    if not os.path.exists(saving_dir):
+                        os.makedirs(saving_dir)
+                    
+                    nn.save(sess, saving_dir)
+                    _log("-SAVE- done")
+
                 # Perform validation
                 if step > 0 and step % val_period == 0:
                     _log("-VALID- start")
                     val_expects = []
                     val_predicts = []
                     val_losses = []
-                    for val_inputs, val_labels in valid_dat.batches(batch_size):
-                        food = {labels: val_labels}
+                    for val_inputs, val_labels in valid_dat.batches(batch_size, 100):
+                        food = {labels: val_labels, 'keep_prob:0': 1}
                         for i in xrange(no_views):
                             food["i{}:0".format(i)] = val_inputs[i]
 
@@ -150,22 +159,12 @@ def _train(
                         "validation_acc": val_acc
                         }, step)
 
-                # Save the current model
-                if step % save_period == 0:
-                    _log("-SAVE- start")
-                    saving_dir = os.path.join(chkpnt_dir, str(step))
-                    if not os.path.exists(saving_dir):
-                        os.makedirs(saving_dir)
-                    
-                    nn.save(sess, saving_dir)
-                    _log("-SAVE- done")
-
                 step += 1
 
 
 def main():
-    train_dat = Data(FLAGS.data_dir, "train", FLAGS.no_views)
-    valid_dat = Data(FLAGS.data_dir, "valid", FLAGS.no_views)
+    train_dat = Data(FLAGS.data_dir, "train", FLAGS.no_views, no_categories=16)
+    valid_dat = Data(FLAGS.data_dir, "valid", FLAGS.no_views, no_categories=16)
     summ = ScalarSummarizer(FLAGS.summ_dir, {
         "validation_loss": "float32",
         "validation_acc": "float32"

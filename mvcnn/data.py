@@ -45,11 +45,14 @@ class Data:
         self._objects = self._objects[idx]
 
 
-    def batches(self, batch_size):
+    def batches(self, batch_size, no_examples=-1):
         """
         """
-        for start in xrange(0, self._size, batch_size):
-            yield self._load_objects(self._objects[start : min(self._size, start +
+        if no_examples == -1:
+            no_examples = self._size
+
+        for start in xrange(0, no_examples, batch_size):
+            yield self._load_objects(self._objects[start : min(no_examples, start +
                 batch_size)])
 
 

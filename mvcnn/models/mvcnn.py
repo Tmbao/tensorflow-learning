@@ -48,7 +48,7 @@ class MVCNN:
             sess (tf.Session()): The current session.
             directory: Directory in which the weight file was saved.
         """
-        self._view[0].restore(sess, directory)
+        self._views[0].restore(sess, directory)
         self._aggr.save(sess, directory)
 
 

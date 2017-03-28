@@ -4,14 +4,14 @@ import numpy as np
 from nn import NN
 
 
-class AggregatorNN(NN):
+class Aggregator(NN):
     """
-    An AggregatorNN consisting of n relu-ed fully connected layers.
+    A FCAggregator consisting of n relu-ed fully connected layers.
     """
     @staticmethod
-    def create_variables(dims=[1000, 1000], from_file=None):
+    def create_variables(dims=[7 * 7 * 512, 2048, 16], from_file=None):
         """
-        Create all variables for AggregatorNN.
+        Create all variables for FCAggregator.
 
         Args:
             dims: An array of the number of dimensions each layer, dims[0]
@@ -75,7 +75,7 @@ class AggregatorNN(NN):
         Returns:
             An instance of AggregatorNN.
         """
-        return AggregatorNN(variables, name)
+        return Aggregator(variables, name)
 
 
     def forward(self, inputs):

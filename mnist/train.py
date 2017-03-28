@@ -69,12 +69,6 @@ def train(train_data,
             log('loading the latest checkpoint')
             saver.restore(sess, from_chkpnt)
 
-
-        test_val = tf.Variable(tf.constant(0, shape=[2]))
-        sess.run(test_val.assign(np.array([1, 2])))
-        with sess.as_default():
-            print test_val.eval().type
-
         # Start training
         step = start_step
         for epoch in xrange(20):

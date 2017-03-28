@@ -53,7 +53,7 @@ class NN:
                 sess.run(self._variables[key].assign(values[key]))
 
         # Restore all variables from an npz file
-        values = np.load(self._get_file_name())
+        values = np.load(self._get_file_name(directory))
         _assign_variables(values) 
 
 
