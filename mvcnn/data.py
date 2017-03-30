@@ -50,6 +50,8 @@ class Data:
         """
         if no_examples == -1:
             no_examples = self._size
+        else:
+            no_examples = min(no_examples, self._size)
 
         for start in xrange(0, no_examples, batch_size):
             yield self._load_objects(self._objects[start : min(no_examples, start +

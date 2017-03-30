@@ -49,7 +49,7 @@ class MVCNN:
             directory: Directory in which the weight file was saved.
         """
         self._views[0].restore(sess, directory)
-        self._aggr.save(sess, directory)
+        self._aggr.restore(sess, directory)
 
 
     def forward(self, inputs):

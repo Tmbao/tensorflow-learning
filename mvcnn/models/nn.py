@@ -31,10 +31,8 @@ class NN:
             directory: Directory in which this file should be saved.
         """
         def _eval_variables():
-            with sess.as_default():
-                result = {key: self._variables[key].eval()
-                        for key in self._variables.keys()}
-            return result
+            return {key: self._variables[key].eval(sess)
+                    for key in self._variables.keys()}
 
         # Save all variables as an npz file
         np.savez(self._get_file_name(directory), **_eval_variables())
@@ -51,6 +49,7 @@ class NN:
         def _assign_variables(values):
             for key in self._variables.keys():
                 sess.run(self._variables[key].assign(values[key]))
+                
 
         # Restore all variables from an npz file
         values = np.load(self._get_file_name(directory))
