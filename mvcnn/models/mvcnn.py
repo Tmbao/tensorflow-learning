@@ -1,3 +1,6 @@
+"""
+A multiview classifier implementation.
+"""
 import tensorflow as tf
 import numpy as np
 
@@ -7,12 +10,12 @@ class MVCNN:
     A multi-view CNN for recognizing 3d objects.
     """
 
-    def __init__(self, 
-            view_create,
-            view_vars,
-            aggr_create,
-            aggr_vars,
-            no_views=26):
+    def __init__(self,
+                 view_create,
+                 view_vars,
+                 aggr_create,
+                 aggr_vars,
+                 no_views=26):
         """
         Construct a MVCNN.
 
@@ -62,9 +65,9 @@ class MVCNN:
         Returns:
             An output tensor.
         """
-        view_outputs = [self._views[i].forward(inputs[i]) 
-                for i in xrange(self._no_views)]
-        concatenated_outputs = tf.concat([tf.expand_dims(view_output, 0) 
-            for view_output in view_outputs], 0)
+        view_outputs = [self._views[i].forward(inputs[i])
+                        for i in xrange(self._no_views)]
+        concatenated_outputs = tf.concat([tf.expand_dims(view_output, 0)
+                                          for view_output in view_outputs], 0)
         view_pooling = tf.reduce_max(concatenated_outputs, [0])
         return self._aggr.forward(view_pooling)

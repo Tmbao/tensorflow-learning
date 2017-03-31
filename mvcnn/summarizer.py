@@ -1,3 +1,6 @@
+"""
+Summarizer for trainer.
+"""
 import tensorflow as tf
 
 

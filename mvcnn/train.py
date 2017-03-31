@@ -1,3 +1,6 @@
+"""
+Training program.
+"""
 import tensorflow as tf
 import numpy as np
 import os
@@ -12,17 +15,17 @@ from data import Data
 DEFAULT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 FLAGS = tf.app.flags.FLAGS
-tf.app.flags.DEFINE_string("data_dir", "{}/data".format(DEFAULT_DIR), 
-        "Data directory")
+tf.app.flags.DEFINE_string("data_dir", "{}/data".format(DEFAULT_DIR),
+                           "Data directory")
 tf.app.flags.DEFINE_string("chkpnt_dir", "{}/chkpnts".format(DEFAULT_DIR),
-        "Checkpoint directory")
+                           "Checkpoint directory")
 tf.app.flags.DEFINE_string("summ_dir", "{}/summary".format(DEFAULT_DIR),
-        "Summary directory")
+                           "Summary directory")
 tf.app.flags.DEFINE_integer("no_views", 26, "Number of views")
 tf.app.flags.DEFINE_string("view_wei", None,
-        "Pre-trained weights for view CNNs")
+                           "Pre-trained weights for view CNNs")
 tf.app.flags.DEFINE_integer("from_step", 0,
-        "Continue training from a checkpoint")
+                            "Continue training from a checkpoint")
 tf.app.flags.DEFINE_integer("batch_size", 100, "Batch size")
 tf.app.flags.DEFINE_float("learning_rate", 0.00001, "Learning rate")
 tf.app.flags.DEFINE_integer("log_period", 5, "Log period")
@@ -34,18 +37,18 @@ tf.app.flags.DEFINE_boolean("verbose", False, "Verbose mode")
 
 def _log(message):
     if FLAGS.verbose:
-        print message
+        print(message)
 
 
 def _loss(logits, labels):
     losses = tf.nn.softmax_cross_entropy_with_logits(labels=labels,
-            logits=logits)
+                                                     logits=logits)
     return tf.reduce_mean(losses)
 
 
 def _trainer(loss, step, learning_rate):
     return tf.train.AdamOptimizer(learning_rate).minimize(loss,
-            global_step=step)
+                                                          global_step=step)
 
 
 def _infer(logits):
@@ -80,20 +83,20 @@ def _train(
 
     # Place holders
     inputs = [tf.placeholder("float32", shape=(None, 224, 224, 3),
-        name="i{}".format(i)) for i in xrange(no_views)]
+                             name="i{}".format(i)) for i in xrange(no_views)]
     labels = tf.placeholder("float32", shape=(None, 16))
 
     # Tensors
     nn = MVCNN(
-            VGG16.create_model,
-            VGG16.create_variables(view_wei, trainable=False),
-            Aggregator.create_model,
-            Aggregator.create_variables(),
-            no_views)
+        VGG16.create_model,
+        VGG16.create_variables(view_wei, trainable=False),
+        Aggregator.create_model,
+        Aggregator.create_variables(),
+        no_views)
     outputs = nn.forward(inputs)
     loss = _loss(outputs, labels)
     trainer = _trainer(loss, tf.Variable(step, trainable=False),
-            learning_rate)
+                       learning_rate)
     infer = _infer(outputs)
 
     _log("initializing the model")
@@ -113,7 +116,7 @@ def _train(
 
             # Feed the model
             _, _, loss_val = sess.run([trainer, infer, loss],
-                    feed_dict=food)
+                                      feed_dict=food)
 
             # Log info
             if step % log_period == 0:
@@ -142,7 +145,7 @@ def _train(
 
                     v_expects = np.argmax(val_labels, 1)
                     v_predicts, v_loss, = sess.run([infer, loss],
-                            feed_dict=food)
+                                                   feed_dict=food)
 
                     val_expects = np.concatenate([val_expects, v_expects])
                     val_predicts = np.concatenate([val_predicts, v_predicts])
@@ -170,19 +173,19 @@ def main():
         "validation_acc": "float32"
         })
     _train(
-            train_dat,
-            valid_dat,
-            summ,
-            FLAGS.no_views,
-            FLAGS.view_wei,
-            FLAGS.chkpnt_dir,
-            FLAGS.from_step,
-            FLAGS.batch_size,
-            FLAGS.learning_rate,
-            FLAGS.log_period,
-            FLAGS.val_period,
-            FLAGS.save_period,
-            FLAGS.no_epoch)
+        train_dat,
+        valid_dat,
+        summ,
+        FLAGS.no_views,
+        FLAGS.view_wei,
+        FLAGS.chkpnt_dir,
+        FLAGS.from_step,
+        FLAGS.batch_size,
+        FLAGS.learning_rate,
+        FLAGS.log_period,
+        FLAGS.val_period,
+        FLAGS.save_period,
+        FLAGS.no_epoch)
 
 
 if __name__ == "__main__":

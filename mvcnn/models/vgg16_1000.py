@@ -1,3 +1,6 @@
+"""
+A VGG16 implementation.
+"""
 import tensorflow as tf
 import numpy as np
 
@@ -26,10 +29,10 @@ class VGG16(NN):
                 init = tf.truncated_normal(shape, stddev=0.1)
                 return tf.Variable(init)
 
-            def _bias_variable(shape): 
+            def _bias_variable(shape):
                 init = tf.constant(0.1, shape=shape)
                 return tf.Variable(init)
-            
+
             return _weight_variable, _bias_variable
 
         def _load_variables():
@@ -37,7 +40,7 @@ class VGG16(NN):
             class Local:
                 keys = sorted(data.keys())
                 idx = 0
-            
+
             def _weight_variable(shape):
                 init = tf.constant(data[Local.keys[Local.idx]])
                 Local.idx += 1
@@ -117,7 +120,7 @@ class VGG16(NN):
         """
         return VGG16(variables, name)
 
-    
+
     def forward(self, inputs):
         """
         Get an output tensor corresponding to the input tensor.
@@ -129,18 +132,18 @@ class VGG16(NN):
         """
         def _apply_convolution(inputs, kernel, bias):
             return tf.nn.relu(
-                    tf.nn.conv2d(
-                        inputs, 
-                        kernel, 
-                        strides=[1, 1, 1, 1],
-                        padding="SAME") + bias)
-                
+                tf.nn.conv2d(
+                    inputs,
+                    kernel,
+                    strides=[1, 1, 1, 1],
+                    padding="SAME") + bias)
+
         def _apply_pooling(inputs):
             return tf.nn.max_pool(
-                    inputs, 
-                    ksize=[1, 2, 2, 1], 
-                    strides=[1, 2, 2, 1],
-                    padding="SAME")
+                inputs,
+                ksize=[1, 2, 2, 1],
+                strides=[1, 2, 2, 1],
+                padding="SAME")
 
         def _apply_fc_relu(inputs, weight, bias):
             return tf.nn.relu(tf.matmul(inputs, weight) + bias)
@@ -149,64 +152,64 @@ class VGG16(NN):
             return self._variables[name]
 
         conv11 = _apply_convolution(inputs, 
-                _get_variable("11K"),
-                _get_variable("11b")) 
+                                    _get_variable("11K"),
+                                    _get_variable("11b")) 
         conv12 = _apply_convolution(conv11,
-                _get_variable("12K"),
-                _get_variable("12b"))
+                                    _get_variable("12K"),
+                                    _get_variable("12b"))
         pool1 = _apply_pooling(conv12)
 
         conv21 = _apply_convolution(pool1,
-                _get_variable("21K"),
-                _get_variable("21b"))
+                                    _get_variable("21K"),
+                                    _get_variable("21b"))
         conv22 = _apply_convolution(conv21,
-                _get_variable("22K"),
-                _get_variable("22b"))
+                                    _get_variable("22K"),
+                                    _get_variable("22b"))
         pool2 = _apply_pooling(conv22)
 
         conv31 = _apply_convolution(pool2,
-                _get_variable("31K"),
-                _get_variable("31b"))
+                                    _get_variable("31K"),
+                                    _get_variable("31b"))
         conv32 = _apply_convolution(conv31,
-                _get_variable("32K"),
-                _get_variable("32b"))
+                                    _get_variable("32K"),
+                                    _get_variable("32b"))
         conv33 = _apply_convolution(conv32,
-                _get_variable("33K"),
-                _get_variable("33b"))
+                                    _get_variable("33K"),
+                                    _get_variable("33b"))
         pool3 = _apply_pooling(conv33)
 
         conv41 = _apply_convolution(pool3,
-                _get_variable("41K"),
-                _get_variable("41b"))
+                                    _get_variable("41K"),
+                                    _get_variable("41b"))
         conv42 = _apply_convolution(conv41,
-                _get_variable("42K"),
-                _get_variable("42b"))
+                                    _get_variable("42K"),
+                                    _get_variable("42b"))
         conv43 = _apply_convolution(conv42,
-                _get_variable("43K"),
-                _get_variable("43b"))
+                                    _get_variable("43K"),
+                                    _get_variable("43b"))
         pool4 = _apply_pooling(conv43)
 
         conv51 = _apply_convolution(pool4,
-                _get_variable("51K"),
-                _get_variable("51b"))
+                                    _get_variable("51K"),
+                                    _get_variable("51b"))
         conv52 = _apply_convolution(conv51,
-                _get_variable("52K"),
-                _get_variable("52b"))
+                                    _get_variable("52K"),
+                                    _get_variable("52b"))
         conv53 = _apply_convolution(conv52,
-                _get_variable("53K"),
-                _get_variable("53b"))
+                                    _get_variable("53K"),
+                                    _get_variable("53b"))
         pool5 = _apply_pooling(conv53)
 
-        flat =  tf.reshape(pool5, [-1, 7 * 7 * 512])
+        flat = tf.reshape(pool5, [-1, 7 * 7 * 512])
 
         fc1 = _apply_fc_relu(flat,
-                _get_variable("6W"),
-                _get_variable("6b"))
+                             _get_variable("6W"),
+                             _get_variable("6b"))
         fc2 = _apply_fc_relu(fc1,
-                _get_variable("7W"),
-                _get_variable("7b"))
+                             _get_variable("7W"),
+                             _get_variable("7b"))
         fc3 = _apply_fc_relu(fc2,
-                _get_variable("8W"),
-                _get_variable("8b"))
+                             _get_variable("8W"),
+                             _get_variable("8b"))
 
         return fc3

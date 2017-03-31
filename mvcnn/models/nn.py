@@ -1,3 +1,6 @@
+"""
+An interface for NN models.
+"""
 import tensorflow as tf
 import numpy as np
 import os
@@ -16,12 +19,12 @@ class NN:
         self._variables = variables
         self._name = name
 
-    
-    def _get_file_name(self, directory):
-        return os.path.join(directory, 
-                "{}-{}.npz".format(self.__class__.__name__, self._name))
 
-    
+    def _get_file_name(self, directory):
+        return os.path.join(directory,
+                            "{}-{}.npz".format(self.__class__.__name__, self._name))
+
+
     def save(self, sess, directory):
         """
         Save the current model as an npz file.
@@ -49,11 +52,11 @@ class NN:
         def _assign_variables(values):
             for key in self._variables.keys():
                 sess.run(self._variables[key].assign(values[key]))
-                
+
 
         # Restore all variables from an npz file
         values = np.load(self._get_file_name(directory))
-        _assign_variables(values) 
+        _assign_variables(values)
 
 
     def outputs(self, inputs):

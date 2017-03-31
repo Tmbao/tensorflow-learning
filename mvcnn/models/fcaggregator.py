@@ -1,3 +1,6 @@
+"""
+An SVM class using fully-connected layers.
+"""
 import tensorflow as tf
 import numpy as np
 
@@ -25,17 +28,17 @@ class Aggregator(NN):
                 init = tf.truncated_normal(shape, stddev=0.1)
                 return tf.Variable(init)
 
-            def _bias_variable(shape): 
+            def _bias_variable(shape):
                 init = tf.constant(0.1, shape=shape)
                 return tf.Variable(init)
-            
+
             return _weight_variable, _bias_variable
 
         def _load_variables():
             data = np.load(from_file)
             keys = sorted(data.keys())
             idx = 0
-            
+
             def _weight_variable(shape):
                 init = tf.constant(data[keys[idx]])
                 idx += 1
@@ -55,16 +58,16 @@ class Aggregator(NN):
             _weight_variable, _bias_variable = _create_new_variables()
         else:
             _weight_variable, _bias_variable = _load_variables()
-            
+
         no_layers = len(dims)
         for i in range(1, no_layers):
             variables["{}W".format(i)] = _weight_variable([dims[i - 1],
-                dims[i]])
+                                                           dims[i]])
             variables["{}b".format(i)] = _bias_variable([dims[i]])
 
         return variables
-    
-    
+
+
     @staticmethod
     def create_model(variables=create_variables.__func__(), name=""):
         """
