@@ -78,7 +78,7 @@ class Data:
         labels = []
         for obj in objects:
             # Get labels
-            category = re.search(r"\/([a-z]+)\_", obj).group(1)
+            category = re.search(r"\/([a-z]+)[^a-z]", obj).group(1)
             logits = [0.0] * self._no_categories
             logits[self._label2id[category]] = 1.0
             labels.append(logits)
@@ -88,5 +88,3 @@ class Data:
                 inputs[i].append(_load_image(views[i]))
 
         return np.array(inputs), np.array(labels)
-
-

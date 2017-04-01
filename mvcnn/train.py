@@ -1,3 +1,4 @@
+#!/usr/local/bin/python3
 """
 Training program.
 """
@@ -26,11 +27,11 @@ tf.app.flags.DEFINE_string("view_wei", None,
                            "Pre-trained weights for view CNNs")
 tf.app.flags.DEFINE_integer("from_step", 0,
                             "Continue training from a checkpoint")
-tf.app.flags.DEFINE_integer("batch_size", 100, "Batch size")
+tf.app.flags.DEFINE_integer("batch_size", 8, "Batch size")
 tf.app.flags.DEFINE_float("learning_rate", 0.00001, "Learning rate")
 tf.app.flags.DEFINE_integer("log_period", 5, "Log period")
-tf.app.flags.DEFINE_integer("val_period", 20, "Validation period")
-tf.app.flags.DEFINE_integer("save_period", 10, "Saving period")
+tf.app.flags.DEFINE_integer("val_period", 25, "Validation period")
+tf.app.flags.DEFINE_integer("save_period", 50, "Saving period")
 tf.app.flags.DEFINE_integer("no_epoch", 100, "Number of epoches")
 tf.app.flags.DEFINE_boolean("verbose", False, "Verbose mode")
 
