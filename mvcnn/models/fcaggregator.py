@@ -4,7 +4,7 @@ An SVM class using fully-connected layers.
 import tensorflow as tf
 import numpy as np
 
-from nn import NN
+from models.nn import NN
 
 
 class Aggregator(NN):

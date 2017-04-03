@@ -4,7 +4,9 @@ An SVM class using convolutional and fully-connected layers.
 import tensorflow as tf
 import numpy as np
 
-from nn import NN
+from functools import reduce
+
+from models.nn import NN
 
 
 class Aggregator(NN):
@@ -53,7 +55,6 @@ class Aggregator(NN):
 
             return _weight_variable, _bias_variable
 
-
         variables = {}
 
         if from_file == None:
@@ -66,10 +67,12 @@ class Aggregator(NN):
         # Create convolution layers to reduce the number of filters
         width, height, no_filters, no_classes = dims
         while no_filters > filter_threshold:
-            variables["{}K".format(layer_id)] = _weight_variable([3, 3, no_filters, no_filters / 2])
-            variables["{}b".format(layer_id)] = _bias_variable([no_filters / 2])
+            variables["{}K".format(layer_id)] = _weight_variable([3, 3, no_filters,
+                                                                  no_filters // 2])
+            variables["{}b".format(layer_id)] = _bias_variable(
+                [no_filters // 2])
             layer_id += 1
-            no_filters /= 2
+            no_filters //= 2
 
         # Create a fully connected layer for SVM purpose
         variables["{}W".format(layer_id)] = _weight_variable([width * height * no_filters,
@@ -77,7 +80,6 @@ class Aggregator(NN):
         variables["{}b".format(layer_id)] = _bias_variable([no_classes])
 
         return variables
-
 
     @staticmethod
     def create_model(variables=create_variables.__func__(), name=""):
@@ -90,7 +92,6 @@ class Aggregator(NN):
             An instance of AggregatorNN.
         """
         return Aggregator(variables, name)
-
 
     def forward(self, inputs):
         """
@@ -118,7 +119,7 @@ class Aggregator(NN):
             return self._variables[name]
 
         result = inputs
-        no_layers = len(self._variables) / 2
+        no_layers = len(self._variables) // 2
         for i in range(1, no_layers):
             # Convolution
             result = _apply_convolution(result,
@@ -131,7 +132,7 @@ class Aggregator(NN):
         result = tf.reshape(result, [-1, reduce(lambda x, y: x * y, dims, 1)])
 
         keep_prob = tf.placeholder(tf.float32, name='keep_prob')
-        result = tf.nn.dropout(result, keep_prob)
+        # result = tf.nn.dropout(result, keep_prob)
 
         result = _apply_fc_relu(result,
                                 _get_variable("{}W".format(no_layers)),

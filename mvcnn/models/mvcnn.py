@@ -27,7 +27,7 @@ class MVCNN:
             no_views: Number of views.
         """
         self._no_views = no_views
-        self._views = [view_create(view_vars, name="view") for _ in xrange(no_views)]
+        self._views = [view_create(view_vars, name="view") for _ in range(no_views)]
         self._aggr = aggr_create(aggr_vars, name="aggr")
 
 
@@ -66,7 +66,7 @@ class MVCNN:
             An output tensor.
         """
         view_outputs = [self._views[i].forward(inputs[i])
-                        for i in xrange(self._no_views)]
+                        for i in range(self._no_views)]
         concatenated_outputs = tf.concat([tf.expand_dims(view_output, 0)
                                           for view_output in view_outputs], 0)
         view_pooling = tf.reduce_max(concatenated_outputs, [0])

@@ -4,7 +4,7 @@ A VGG16 implementation.
 import tensorflow as tf
 import numpy as np
 
-from nn import NN
+from models.nn import NN
 
 
 class VGG16(NN):

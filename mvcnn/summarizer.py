@@ -11,14 +11,14 @@ class ScalarSummarizer:
             self._sess = tf.Session()
             self._writer = tf.summary.FileWriter(summary_dir, graph=self._graph)
             self._summary_tensors = {}
-            for tensor_name, tensor_type in tensors.iteritems():
+            for tensor_name, tensor_type in tensors.items():
                 self._summary_tensors[tensor_name] = tf.summary.scalar(
                     tensor_name,
                     tf.placeholder(tensor_type, name=tensor_name))
 
     def log(self, tensors, step):
         with self._graph.as_default():
-            for tensor_name, tensor_val in tensors.iteritems():
+            for tensor_name, tensor_val in tensors.items():
                 self._writer.add_summary(self._sess.run(
                     self._summary_tensors[tensor_name],
                     feed_dict={

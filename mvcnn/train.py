@@ -25,10 +25,10 @@ tf.app.flags.DEFINE_string("summ_dir", "{}/summary".format(DEFAULT_DIR),
 tf.app.flags.DEFINE_integer("no_views", 26, "Number of views")
 tf.app.flags.DEFINE_string("view_wei", None,
                            "Pre-trained weights for view CNNs")
-tf.app.flags.DEFINE_integer("from_step", 0,
+tf.app.flags.DEFINE_integer("from_step", -1,
                             "Continue training from a checkpoint")
 tf.app.flags.DEFINE_integer("batch_size", 8, "Batch size")
-tf.app.flags.DEFINE_float("learning_rate", 0.00001, "Learning rate")
+tf.app.flags.DEFINE_float("learning_rate", 0.000001, "Learning rate")
 tf.app.flags.DEFINE_integer("log_period", 5, "Log period")
 tf.app.flags.DEFINE_integer("val_period", 25, "Validation period")
 tf.app.flags.DEFINE_integer("save_period", 50, "Saving period")
@@ -77,93 +77,98 @@ def _train(
     train_size = train_dat.size()
     _log("training size = {}".format(train_size))
 
-    step = from_step
+    step = from_step + 1
 
-    # Start a session
-    sess = tf.Session()
+    with tf.Graph().as_default():
 
-    # Place holders
-    inputs = [tf.placeholder("float32", shape=(None, 224, 224, 3),
-                             name="i{}".format(i)) for i in xrange(no_views)]
-    labels = tf.placeholder("float32", shape=(None, 16))
+        # Start a session
+        sess = tf.Session()
 
-    # Tensors
-    nn = MVCNN(
-        VGG16.create_model,
-        VGG16.create_variables(view_wei, trainable=False),
-        Aggregator.create_model,
-        Aggregator.create_variables(),
-        no_views)
-    outputs = nn.forward(inputs)
-    loss = _loss(outputs, labels)
-    trainer = _trainer(loss, tf.Variable(step, trainable=False),
-                       learning_rate)
-    infer = _infer(outputs)
+        # Place holders
+        inputs = [tf.placeholder("float32", shape=(None, 224, 224, 3),
+                                 name="i{}".format(i)) for i in range(no_views)]
+        labels = tf.placeholder("float32", shape=(None, 16))
 
-    _log("initializing the model")
-    sess.run(tf.global_variables_initializer())
-    if from_step > 0:
-        _log("restoring the model")
-        nn.restore(sess, os.path.join(chkpnt_dir, str(from_step)))
+        # Tensors
+        nn = MVCNN(
+            VGG16.create_model,
+            VGG16.create_variables(view_wei, trainable=True),
+            Aggregator.create_model,
+            Aggregator.create_variables(),
+            no_views)
+        outputs = nn.forward(inputs)
+        loss = _loss(outputs, labels)
+        trainer = _trainer(loss, tf.Variable(step, trainable=False),
+                           learning_rate)
+        infer = _infer(outputs)
 
-    for epoch in xrange(no_epoch):
-        _log("epoch = {}".format(epoch))
+        _log("initializing the model")
+        sess.run(tf.global_variables_initializer())
+        if from_step > 0:
+            _log("restoring the model")
+            nn.restore(sess, os.path.join(chkpnt_dir, str(from_step)))
 
-        for b_inputs, b_labels in train_dat.batches(batch_size):
-            # Create food
-            food = {labels: b_labels, 'keep_prob:0': 0.5}
-            for i in xrange(no_views):
-                food["i{}:0".format(i)] = b_inputs[i]
+        for epoch in range(no_epoch):
+            _log("epoch = {}".format(epoch))
 
-            # Feed the model
-            _, _, loss_val = sess.run([trainer, infer, loss],
-                                      feed_dict=food)
+            for b_inputs, b_labels in train_dat.batches(batch_size):
+                # Create food
+                food = {labels: b_labels, 'keep_prob:0': 0.5}
+                for i in range(no_views):
+                    food["i{}:0".format(i)] = b_inputs[i]
 
-            # Log info
-            if step % log_period == 0:
-                _log("-TRAIN- step={}, loss={}".format(step, loss_val))
+                # Feed the model
+                _, _, loss_val = sess.run([trainer, infer, loss],
+                                          feed_dict=food)
 
-            # Save the current model
-            if step % save_period == 0:
-                _log("-SAVE- start")
-                saving_dir = os.path.join(chkpnt_dir, str(step))
-                if not os.path.exists(saving_dir):
-                    os.makedirs(saving_dir)
+                # Log info
+                if step % log_period == 0:
+                    _log("-TRAIN- step={}, loss={}".format(step, loss_val))
 
-                nn.save(sess, saving_dir)
-                _log("-SAVE- done")
+                # Save the current model
+                if step % save_period == 0:
+                    _log("-SAVE- start")
+                    saving_dir = os.path.join(chkpnt_dir, str(step))
+                    if not os.path.exists(saving_dir):
+                        os.makedirs(saving_dir)
 
-            # Perform validation
-            if step > 0 and step % val_period == 0:
-                _log("-VALID- start")
-                val_expects = []
-                val_predicts = []
-                val_losses = []
-                for val_inputs, val_labels in valid_dat.batches(batch_size, 100):
-                    food = {labels: val_labels, 'keep_prob:0': 1}
-                    for i in xrange(no_views):
-                        food["i{}:0".format(i)] = val_inputs[i]
+                    nn.save(sess, saving_dir)
+                    _log("-SAVE- done")
 
-                    v_expects = np.argmax(val_labels, 1)
-                    v_predicts, v_loss, = sess.run([infer, loss],
-                                                   feed_dict=food)
+                # Perform validation
+                if step > 0 and step % val_period == 0:
+                    _log("-VALID- start")
+                    val_expects = []
+                    val_predicts = []
+                    val_losses = []
+                    for val_inputs, val_labels in valid_dat.batches(batch_size):
+                        food = {labels: val_labels, 'keep_prob:0': 1}
+                        for i in range(no_views):
+                            food["i{}:0".format(i)] = val_inputs[i]
 
-                    val_expects = np.concatenate([val_expects, v_expects])
-                    val_predicts = np.concatenate([val_predicts, v_predicts])
-                    val_losses.append(v_loss)
+                        v_expects = np.argmax(val_labels, 1)
+                        v_predicts, v_loss, = sess.run([infer, loss],
+                                                       feed_dict=food)
 
-                val_corrects = np.equal(val_predicts[:len(val_expects)], val_expects)
-                val_acc = np.mean(val_corrects)
-                val_loss = np.mean(np.array(val_losses))
+                        val_expects = np.concatenate([val_expects, v_expects])
+                        val_predicts = np.concatenate(
+                            [val_predicts, v_predicts])
+                        val_losses.append(v_loss)
 
-                _log("-VALID- done: loss=%.2f, acc=%.2f" % (val_loss, val_acc))
+                    val_corrects = np.equal(
+                        val_predicts[:len(val_expects)], val_expects)
+                    val_acc = np.mean(val_corrects)
+                    val_loss = np.mean(np.array(val_losses))
 
-                summ.log({
-                    "validation_loss": val_loss,
-                    "validation_acc": val_acc
+                    _log("-VALID- done: loss=%.2f, acc=%.2f" %
+                         (val_loss, val_acc))
+
+                    summ.log({
+                        "validation_loss": val_loss,
+                        "validation_acc": val_acc
                     }, step)
 
-            step += 1
+                step += 1
 
 
 def main():
@@ -172,7 +177,7 @@ def main():
     summ = ScalarSummarizer(FLAGS.summ_dir, {
         "validation_loss": "float32",
         "validation_acc": "float32"
-        })
+    })
     _train(
         train_dat,
         valid_dat,

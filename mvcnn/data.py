@@ -45,7 +45,7 @@ class Data:
         """
         Shuffle all examples.
         """
-        idx = range(self._size)
+        idx = list(range(self._size))
         np.random.shuffle(idx)
         self._objects = self._objects[idx]
 
@@ -78,7 +78,7 @@ class Data:
         labels = []
         for obj in objects:
             # Get labels
-            category = re.search(r"\/([a-z]+)[^a-z]", obj).group(1)
+            category = re.search(r"([a-z]+)[^a-z]", os.path.basename(obj)).group(1)
             logits = [0.0] * self._no_categories
             logits[self._label2id[category]] = 1.0
             labels.append(logits)
