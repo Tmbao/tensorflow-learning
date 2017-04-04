@@ -66,9 +66,6 @@ def _train(
         save_period,
         no_epoch):
 
-    train_dat.shuffle()
-    valid_dat.shuffle()
-
     train_size = train_dat.size()
     _log("training size = {}".format(train_size))
 
@@ -98,6 +95,7 @@ def _train(
 
     for epoch in range(no_epoch):
         _log("epoch = {}".format(epoch))
+        train_dat.shuffle()
 
         for b_inputs, b_labels in train_dat.batches(batch_size):
             # Merge outputs from CNN
@@ -129,10 +127,11 @@ def _train(
             # Perform validation
             if step > 0 and step % val_period == 0:
                 _log("-VALID- start")
+                valid_dat.shuffle()
                 val_expects = []
                 val_predicts = []
                 val_losses = []
-                for val_inputs, val_labels in valid_dat.batches(batch_size):
+                for val_inputs, val_labels in valid_dat.batches(batch_size, 1024):
                     # Merge outputs from CNN
                     concated_outputs = np.concatenate([np.expand_dims(cnn.classify(v_input), 0)
                                                        for v_input in val_inputs], 0)
