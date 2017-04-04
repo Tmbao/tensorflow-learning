@@ -1,18 +1,18 @@
 """
 An SVM class using fully-connected layers.
 """
-import tensorflow as tf
 import numpy as np
+import tensorflow as tf
 
-from models.nn import NN
+from nets.nn import NN
 
 
-class Aggregator(NN):
+class FCAggregator(NN):
     """
     A FCAggregator consisting of n relu-ed fully connected layers.
     """
     @staticmethod
-    def create_variables(dims=[7 * 7 * 512, 2048, 16], from_file=None):
+    def create_variables(dims=[1008, 16], from_file=None):
         """
         Create all variables for FCAggregator.
 
@@ -76,7 +76,7 @@ class Aggregator(NN):
         Returns:
             An instance of AggregatorNN.
         """
-        return Aggregator(variables, name)
+        return FCAggregator(variables, name)
 
     def forward(self, inputs):
         result = inputs

@@ -3,8 +3,10 @@ Data provider for trainer.
 """
 import os
 import re
-import cv2
+
 import numpy as np
+
+import cv2
 
 
 class Data:
