@@ -45,6 +45,16 @@ def _train(
             np.save(os.path.join(path, "data.npz"), view_pooling[index])
             _log("saved {}".format(os.path.join(path, "data.npz")))
 
+    for b_inputs, _, b_paths in valid_dat.batches(1):
+        # Merge outputs from CNN
+        concated_outputs = np.concatenate([np.expand_dims(cnn.classify(b_input), 0)
+                                           for b_input in b_inputs], 0)
+        view_pooling = np.amax(concated_outputs, 0)
+
+        for index, path in enumerate(b_paths):
+            np.save(os.path.join(path, "data.npz"), view_pooling[index])
+            _log("saved {}".format(os.path.join(path, "data.npz")))
+
 
 def main():
     train_dat = Data(FLAGS.data_dir, "train", FLAGS.no_views,
