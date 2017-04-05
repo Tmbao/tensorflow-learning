@@ -12,7 +12,7 @@ class FCAggregator(NN):
     A FCAggregator consisting of n relu-ed fully connected layers.
     """
     @staticmethod
-    def create_variables(dims=[1008, 16], from_file=None):
+    def create_variables(dims=[1008, 512, 16], from_file=None):
         """
         Create all variables for FCAggregator.
 
