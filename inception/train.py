@@ -2,6 +2,7 @@
 """
 Training program.
 """
+import datetime
 import os
 
 import numpy as np
@@ -9,7 +10,6 @@ import tensorflow as tf
 
 from data import Data
 from nets.fc_aggregator import FCAggregator
-from nets.inception_v3 import InceptionV3
 from summarizer import ScalarSummarizer
 
 DEFAULT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -21,7 +21,6 @@ tf.app.flags.DEFINE_string("chkpnt_dir", "{}/chkpnts".format(DEFAULT_DIR),
                            "Checkpoint directory")
 tf.app.flags.DEFINE_string("summ_dir", "{}/summary".format(DEFAULT_DIR),
                            "Summary directory")
-tf.app.flags.DEFINE_integer("no_views", 26, "Number of views")
 tf.app.flags.DEFINE_integer("from_step", -1,
                             "Continue training from a checkpoint")
 tf.app.flags.DEFINE_integer("batch_size", 8, "Batch size")
@@ -56,7 +55,6 @@ def _train(
         train_dat,
         valid_dat,
         summ,
-        no_views,
         chkpnt_dir,
         from_step,
         batch_size,
@@ -79,7 +77,6 @@ def _train(
     labels = tf.placeholder("float32", shape=(None, 16))
 
     # Tensors
-    cnn = InceptionV3()
     aggr = FCAggregator.create_model()
     outputs = aggr.forward(inputs)
     loss = _loss(outputs, labels)
@@ -94,25 +91,25 @@ def _train(
         aggr.restore(sess, os.path.join(chkpnt_dir, str(from_step)))
 
     for epoch in range(no_epoch):
-        _log("epoch = {}".format(epoch))
+        _log("{} epoch = {}".format(datetime.datetime.now(), epoch))
         train_dat.shuffle()
 
         for b_inputs, b_labels in train_dat.batches(batch_size):
-            # Merge outputs from CNN
-            concated_outputs = np.concatenate([np.expand_dims(cnn.classify(b_input), 0)
-                                               for b_input in b_inputs], 0)
-            view_pooling = np.amax(concated_outputs, 0)
+            b_inputs = np.squeeze(b_inputs)
 
             # Create food
-            food = {labels: b_labels, inputs: view_pooling}
+            food = {labels: b_labels, inputs: b_inputs}
 
             # Feed the model
             _, _, loss_val = sess.run([trainer, infer, loss],
                                       feed_dict=food)
 
+            summ.log({"training_loss": loss_val}, step)
+
             # Log info
             if step % log_period == 0:
-                _log("-TRAIN- step={}, loss={}".format(step, loss_val))
+                _log(
+                    "-TRAIN- {} step={}, loss={}".format(datetime.datetime.now(), step, loss_val))
 
             # Save the current model
             if step % save_period == 0:
@@ -126,19 +123,16 @@ def _train(
 
             # Perform validation
             if step > 0 and step % val_period == 0:
-                _log("-VALID- start")
+                _log("-VALID- {} start".format(datetime.datetime.now()))
                 valid_dat.shuffle()
                 val_expects = []
                 val_predicts = []
                 val_losses = []
-                for val_inputs, val_labels in valid_dat.batches(batch_size, 1024):
-                    # Merge outputs from CNN
-                    concated_outputs = np.concatenate([np.expand_dims(cnn.classify(v_input), 0)
-                                                       for v_input in val_inputs], 0)
-                    view_pooling = np.amax(concated_outputs, 0)
+                for val_inputs, val_labels, _ in valid_dat.batches(batch_size, 1024):
+                    val_inputs = np.squeeze(val_inputs)
 
                     # Create food
-                    food = {labels: b_labels, inputs: view_pooling}
+                    food = {labels: b_labels, inputs: val_inputs}
 
                     v_expects = np.argmax(val_labels, 1)
                     v_predicts, v_loss, = sess.run([infer, loss],
@@ -154,8 +148,8 @@ def _train(
                 val_acc = np.mean(val_corrects)
                 val_loss = np.mean(np.array(val_losses))
 
-                _log("-VALID- done: loss=%.2f, acc=%.2f" %
-                     (val_loss, val_acc))
+                _log("-VALID- %s done: loss=%.2f, acc=%.2f" %
+                     (datetime.datetime.now(), val_loss, val_acc))
 
                 summ.log({
                     "validation_loss": val_loss,
@@ -166,9 +160,12 @@ def _train(
 
 
 def main():
-    train_dat = Data(FLAGS.data_dir, "train", FLAGS.no_views, no_categories=16)
-    valid_dat = Data(FLAGS.data_dir, "valid", FLAGS.no_views, no_categories=16)
+    train_dat = Data(FLAGS.data_dir, "train", 1,
+                     no_categories=16, suffix=".npz")
+    valid_dat = Data(FLAGS.data_dir, "valid", 1,
+                     no_categories=16, suffix=".npz")
     summ = ScalarSummarizer(FLAGS.summ_dir, {
+        "training_loss": "float32",
         "validation_loss": "float32",
         "validation_acc": "float32"
     })
@@ -176,7 +173,6 @@ def main():
         train_dat,
         valid_dat,
         summ,
-        FLAGS.no_views,
         FLAGS.chkpnt_dir,
         FLAGS.from_step,
         FLAGS.batch_size,

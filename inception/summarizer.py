@@ -5,8 +5,8 @@ import tensorflow as tf
 
 
 class ScalarSummarizer:
-    def __init__(self, summary_dir, tensors, graph=tf.Graph()):
-        self._graph = graph
+    def __init__(self, summary_dir, tensors):
+        self._graph = tf.Graph()
         with self._graph.as_default():
             self._sess = tf.Session()
             self._writer = tf.summary.FileWriter(

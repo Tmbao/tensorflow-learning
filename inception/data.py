@@ -14,7 +14,7 @@ class Data:
     Data provider for tensorflow.
     """
 
-    def __init__(self, prefix, tag, no_views=26, no_categories=1000):
+    def __init__(self, prefix, tag, no_views=26, no_categories=1000, suffix=""):
         """
         Construct a data provider object.
 
@@ -30,11 +30,13 @@ class Data:
             label2id = {key: value for value, key in enumerate(labels)}
             return label2id
 
-        self._objects = self._get_all_files(os.path.join(prefix, tag))
+        self._objects = self._get_all_files(
+            os.path.join(prefix, tag), suffix="")
         self._label2id = _initialize_labels(os.path.join(prefix, tag))
         self._size = len(self._objects)
         self._no_views = no_views
         self._no_categories = no_categories
+        self._suffix = suffix
 
     def size(self):
         """
@@ -63,14 +65,19 @@ class Data:
             yield self._load_objects(self._objects[start: min(no_examples, start +
                                                               batch_size)])
 
-    def _get_all_files(self, path):
+    def _get_all_files(self, path, suffix):
         return np.array(sorted([os.path.join(path, name)
                                 for name in os.listdir(path)
-                                if not name.startswith(".") and not name.startswith("labels")]))
+                                if not name.startswith(".") and
+                                name.endswith(suffix) and not
+                                name.startswith("labels")]))
 
     def _load_objects(self, objects):
         def _load_image(path):
-            return cv2.imread(path)
+            if self._suffix in [".jpg"]:
+                return cv2.imread(path)
+            else:
+                return np.load(path)
 
         inputs = [[] for _ in range(self._no_views)]
         labels = []
@@ -82,8 +89,8 @@ class Data:
             logits[self._label2id[category]] = 1.0
             labels.append(logits)
 
-            views = self._get_all_files(obj)
+            views = self._get_all_files(obj, suffix=self._suffix)
             for i in range(self._no_views):
                 inputs[i].append(_load_image(views[i]))
 
-        return np.array(inputs), np.array(labels)
+        return np.array(inputs), np.array(labels), objects
