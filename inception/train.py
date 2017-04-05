@@ -94,7 +94,7 @@ def _train(
         _log("{} epoch = {}".format(datetime.datetime.now(), epoch))
         train_dat.shuffle()
 
-        for b_inputs, b_labels in train_dat.batches(batch_size):
+        for b_inputs, b_labels, _ in train_dat.batches(batch_size):
             b_inputs = np.squeeze(b_inputs)
 
             # Create food
@@ -161,9 +161,9 @@ def _train(
 
 def main():
     train_dat = Data(FLAGS.data_dir, "train", 1,
-                     no_categories=16, suffix=".npz")
+                     no_categories=16, suffix=".npy")
     valid_dat = Data(FLAGS.data_dir, "valid", 1,
-                     no_categories=16, suffix=".npz")
+                     no_categories=16, suffix=".npy")
     summ = ScalarSummarizer(FLAGS.summ_dir, {
         "training_loss": "float32",
         "validation_loss": "float32",
