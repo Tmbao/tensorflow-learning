@@ -69,8 +69,8 @@ class Data:
         return np.array(sorted([os.path.join(path, name)
                                 for name in os.listdir(path)
                                 if not name.startswith(".") and
-                                name.endswith(suffix) and not
-                                name.startswith("labels")]))
+                                name.lower().endswith(suffix) and
+                                not name.startswith("labels")]))
 
     def _load_objects(self, objects):
         def _load_image(path):
