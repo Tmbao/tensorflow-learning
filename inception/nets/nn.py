@@ -34,7 +34,7 @@ class NN:
             directory: Directory in which this file should be saved.
         """
         def _eval_variables():
-            return {key: self._variables[key].eval(sess)
+            return {key: self._variables[key].eval(session=sess)
                     for key in self._variables.keys()}
 
         # Save all variables as an npz file
@@ -56,5 +56,5 @@ class NN:
         values = np.load(self._get_file_name(directory))
         _assign_variables(values)
 
-    def outputs(self, inputs):
+    def forward(self, inputs):
         pass

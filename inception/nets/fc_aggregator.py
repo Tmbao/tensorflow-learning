@@ -12,7 +12,7 @@ class FCAggregator(NN):
     A FCAggregator consisting of n relu-ed fully connected layers.
     """
     @staticmethod
-    def create_variables(dims=[1008, 512, 16], from_file=None):
+    def create_variables(graph, dims, from_file=None):
         """
         Create all variables for FCAggregator.
 
@@ -58,16 +58,17 @@ class FCAggregator(NN):
         else:
             _weight_variable, _bias_variable = _load_variables()
 
-        no_layers = len(dims)
-        for i in range(1, no_layers):
-            variables["{}W".format(i)] = _weight_variable([dims[i - 1],
-                                                           dims[i]])
-            variables["{}b".format(i)] = _bias_variable([dims[i]])
+        with graph.as_default():
+            no_layers = len(dims)
+            for i in range(1, no_layers):
+                variables["{}W".format(i)] = _weight_variable([dims[i - 1],
+                                                               dims[i]])
+                variables["{}b".format(i)] = _bias_variable([dims[i]])
 
         return variables
 
     @staticmethod
-    def create_model(variables=create_variables.__func__(), name=""):
+    def create_model(variables, name=""):
         """
         Create an instance of AggregatorNN.
 

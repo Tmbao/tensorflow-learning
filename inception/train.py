@@ -27,8 +27,8 @@ tf.app.flags.DEFINE_integer("batch_size", 8, "Batch size")
 tf.app.flags.DEFINE_float("learning_rate", 0.0001, "Learning rate")
 tf.app.flags.DEFINE_integer("log_period", 5, "Log period")
 tf.app.flags.DEFINE_integer("val_period", 25, "Validation period")
-tf.app.flags.DEFINE_integer("save_period", 50, "Saving period")
-tf.app.flags.DEFINE_integer("no_epoch", 100, "Number of epoches")
+tf.app.flags.DEFINE_integer("save_period", 200, "Saving period")
+tf.app.flags.DEFINE_integer("no_epoch", 1000, "Number of epoches")
 tf.app.flags.DEFINE_boolean("verbose", False, "Verbose mode")
 
 
@@ -37,17 +37,17 @@ def _log(message):
         print(message)
 
 
-def _loss(logits, labels):
+def _get_loss_op(logits, labels):
     losses = tf.nn.softmax_cross_entropy_with_logits(labels=labels,
                                                      logits=logits)
     return tf.reduce_mean(losses)
 
 
-def _trainer(loss, step, learning_rate):
-    return tf.train.AdamOptimizer(learning_rate).minimize(loss, global_step=step)
+def _get_train_op(loss_op, step, learning_rate):
+    return tf.train.AdamOptimizer(learning_rate).minimize(loss_op, global_step=step)
 
 
-def _infer(logits):
+def _get_infer_op(logits):
     return tf.argmax(logits, 1)
 
 
@@ -75,94 +75,100 @@ def _train(
 
     train_size = train_dat.size()
     _log("training size = {}".format(train_size))
+    _log("validation size = {}".format(valid_dat.size()))
 
-    step = from_step + 1
+    # Create a new graph
+    graph = tf.Graph()
+    with graph.as_default():
+        # Update step
+        step = from_step + 1
 
-    # Start a session
-    sess = tf.Session()
+        # Start a session
+        sess = tf.Session(graph=graph)
 
-    # Place holders
-    inputs = tf.placeholder("float32", shape=(None, 1008))
-    labels = tf.placeholder("float32", shape=(None, 16))
+        _log("initializing the model")
 
-    # Tensors
-    aggr = FCAggregator.create_model()
-    outputs = aggr.forward(inputs)
-    loss = _loss(outputs, labels)
-    trainer = _trainer(loss, tf.Variable(step, trainable=False),
-                       learning_rate)
-    infer = _infer(outputs)
+        # Place holders
+        inputs = tf.placeholder("float32", shape=(None, 1008))
+        labels = tf.placeholder("float32", shape=(None, 16))
 
-    _log("initializing the model")
-    sess.run(tf.global_variables_initializer())
-    if from_step >= 0:
-        _log("restoring the model")
-        aggr.restore(sess, os.path.join(chkpnt_dir, str(from_step)))
+        # Tensors
+        aggr = FCAggregator.create_model(variables=FCAggregator.create_variables(
+            graph=graph, dims=[1008, 512, 16]), name="aggr")
+        forward_op = aggr.forward(inputs)
+        loss_op = _get_loss_op(forward_op, labels)
+        train_op = _get_train_op(loss_op, tf.Variable(step, trainable=False),
+                                 learning_rate)
+        infer_op = _get_infer_op(forward_op)
 
-    for epoch in range(no_epoch):
-        _log("{} epoch = {}".format(datetime.datetime.now(), epoch))
-        train_dat.shuffle()
+        sess.run(tf.global_variables_initializer())
+        if from_step >= 0:
+            _log("restoring the model")
+            aggr.restore(sess, os.path.join(chkpnt_dir, str(from_step)))
 
-        for b_inputs, b_labels, _ in train_dat.batches(batch_size):
-            b_inputs = np.squeeze(b_inputs)
+        for epoch in range(no_epoch):
+            _log("{} epoch = {}".format(datetime.datetime.now(), epoch))
+            train_dat.shuffle()
 
-            # Create food
-            food = {labels: b_labels, inputs: b_inputs}
+            for trn_inputs, trn_labels, _ in train_dat.batches(batch_size):
+                trn_inputs = np.squeeze(trn_inputs)
 
-            # Feed the model
-            _, _, loss_val = sess.run([trainer, infer, loss],
-                                      feed_dict=food)
+                # Create food
+                food = {labels: trn_labels, inputs: trn_inputs}
 
-            summ.log({"training_loss": loss_val}, step)
+                # Feed the model
+                _, _, loss_val = sess.run([train_op, infer_op, loss_op],
+                                          feed_dict=food)
 
-            # Log info
-            if step % log_period == 0:
-                _log(
-                    "-TRAIN- {} step={}, loss={}".format(datetime.datetime.now(), step, loss_val))
+                summ.log({"training_loss": loss_val}, step)
 
-            # Save the current model
-            if step % save_period == 0:
-                _save_model(aggr, sess, os.path.join(chkpnt_dir, str(step)))
+                # Log info
+                if step % log_period == 0:
+                    _log("-TRAIN- {} step={}, loss={:.4}"
+                         .format(datetime.datetime.now(), step, loss_val))
 
-            # Perform validation
-            if step > 0 and step % val_period == 0:
-                _log("-VALID- {} start".format(datetime.datetime.now()))
-                valid_dat.shuffle()
-                val_expects = []
-                val_predicts = []
-                val_losses = []
-                for val_inputs, val_labels, _ in valid_dat.batches(batch_size, 1024):
-                    val_inputs = np.squeeze(val_inputs)
+                # Save the current model
+                if step % save_period == 0:
+                    _save_model(aggr, sess, os.path.join(
+                        chkpnt_dir, str(step)))
 
-                    # Create food
-                    food = {labels: b_labels, inputs: val_inputs}
+                # Perform validation
+                if step > 0 and step % val_period == 0:
+                    _log("-VALID- {} start".format(datetime.datetime.now()))
+                    valid_dat.shuffle()
+                    ground_truth = []
+                    predictions = []
+                    losses = []
+                    for val_inputs, val_labels, _ in valid_dat.batches(batch_size):
+                        val_inputs = np.squeeze(val_inputs)
 
-                    v_expects = np.argmax(val_labels, 1)
-                    v_predicts, v_loss, = sess.run([infer, loss],
-                                                   feed_dict=food)
+                        # Create food
+                        food = {labels: val_labels, inputs: val_inputs}
 
-                    val_expects = np.concatenate([val_expects, v_expects])
-                    val_predicts = np.concatenate(
-                        [val_predicts, v_predicts])
-                    val_losses.append(v_loss)
+                        infer_val, loss_val, = sess.run(
+                            [infer_op, loss_op], feed_dict=food)
 
-                val_corrects = np.equal(
-                    val_predicts[:len(val_expects)], val_expects)
-                val_acc = np.mean(val_corrects)
-                val_loss = np.mean(np.array(val_losses))
+                        ground_truth = np.concatenate(
+                            [ground_truth, np.argmax(val_labels, 1)])
+                        predictions = np.concatenate([predictions, infer_val])
+                        losses.append(loss_val)
 
-                _log("-VALID- %s done: loss=%.2f, acc=%.2f" %
-                     (datetime.datetime.now(), val_loss, val_acc))
+                    val_acc = np.mean(
+                        np.equal(predictions[:len(ground_truth)], ground_truth))
+                    val_loss = np.mean(np.array(losses))
 
-                summ.log({
-                    "validation_loss": val_loss,
-                    "validation_acc": val_acc
-                }, step)
+                    _log("-VALID- {} done: loss={:.4}, acc={:.4}"
+                        .format(datetime.datetime.now(), val_loss, val_acc))
 
-            step += 1
+                    summ.log({
+                        "validation_loss": val_loss,
+                        "validation_acc": val_acc
+                    }, step)
 
-    # Save at the last step
-    _save_model(aggr, sess, os.path.join(chkpnt_dir, str(step)))
+                step += 1
+
+        # Save at the last step
+        _save_model(aggr, sess, os.path.join(chkpnt_dir, str(step)))
 
 
 def main():
