@@ -24,7 +24,7 @@ tf.app.flags.DEFINE_string("summ_dir", "{}/summary".format(DEFAULT_DIR),
 tf.app.flags.DEFINE_integer("from_step", -1,
                             "Continue training from a checkpoint")
 tf.app.flags.DEFINE_integer("batch_size", 8, "Batch size")
-tf.app.flags.DEFINE_float("learning_rate", 0.000001, "Learning rate")
+tf.app.flags.DEFINE_float("learning_rate", 0.0001, "Learning rate")
 tf.app.flags.DEFINE_integer("log_period", 5, "Log period")
 tf.app.flags.DEFINE_integer("val_period", 25, "Validation period")
 tf.app.flags.DEFINE_integer("save_period", 50, "Saving period")
@@ -51,7 +51,7 @@ def _infer(logits):
     return tf.argmax(logits, 1)
 
 
-def _save_model(nn, saving_dir):
+def _save_model(nn, sess, saving_dir):
     _log("-SAVE- start")
     if not os.path.exists(saving_dir):
         os.makedirs(saving_dir)
@@ -122,7 +122,7 @@ def _train(
 
             # Save the current model
             if step % save_period == 0:
-                _save_model(aggr, os.path.join(chkpnt_dir, str(step)))
+                _save_model(aggr, sess, os.path.join(chkpnt_dir, str(step)))
 
             # Perform validation
             if step > 0 and step % val_period == 0:
@@ -162,7 +162,7 @@ def _train(
             step += 1
 
     # Save at the last step
-    _save_model(aggr, os.path.join(chkpnt_dir, str(step)))
+    _save_model(aggr, sess, os.path.join(chkpnt_dir, str(step)))
 
 
 def main():

@@ -69,8 +69,8 @@ class Data:
         return np.array(sorted([os.path.join(path, name)
                                 for name in os.listdir(path)
                                 if not name.startswith(".") and
-                                name.lower().endswith(suffix) and
-                                not name.startswith("labels")]))
+                                not name.startswith("labels") and
+                                name.endswith(suffix)]))
 
     def _load_objects(self, objects):
         def _load_image(path):
@@ -88,7 +88,6 @@ class Data:
             logits = [0.0] * self._no_categories
             logits[self._label2id[category]] = 1.0
             labels.append(logits)
-
             views = self._get_all_files(obj, suffix=self._suffix)
             for i in range(self._no_views):
                 inputs[i].append(_load_image(views[i]))
