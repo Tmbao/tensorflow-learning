@@ -51,6 +51,15 @@ def _infer(logits):
     return tf.argmax(logits, 1)
 
 
+def _save_model(nn, saving_dir):
+    _log("-SAVE- start")
+    if not os.path.exists(saving_dir):
+        os.makedirs(saving_dir)
+
+    nn.save(sess, saving_dir)
+    _log("-SAVE- done")
+
+
 def _train(
         train_dat,
         valid_dat,
@@ -86,7 +95,7 @@ def _train(
 
     _log("initializing the model")
     sess.run(tf.global_variables_initializer())
-    if from_step > 0:
+    if from_step >= 0:
         _log("restoring the model")
         aggr.restore(sess, os.path.join(chkpnt_dir, str(from_step)))
 
@@ -113,13 +122,7 @@ def _train(
 
             # Save the current model
             if step % save_period == 0:
-                _log("-SAVE- start")
-                saving_dir = os.path.join(chkpnt_dir, str(step))
-                if not os.path.exists(saving_dir):
-                    os.makedirs(saving_dir)
-
-                aggr.save(sess, saving_dir)
-                _log("-SAVE- done")
+                _save_model(aggr, os.path.join(chkpnt_dir, str(step)))
 
             # Perform validation
             if step > 0 and step % val_period == 0:
@@ -157,6 +160,9 @@ def _train(
                 }, step)
 
             step += 1
+
+    # Save at the last step
+    _save_model(aggr, os.path.join(chkpnt_dir, str(step)))
 
 
 def main():
