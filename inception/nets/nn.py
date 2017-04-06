@@ -58,3 +58,9 @@ class NN:
 
     def forward(self, inputs):
         pass
+
+    def regularizer(self):
+        reg = tf.Variable(0.0)
+        for _, value in self._variables.items():
+            reg = reg + tf.nn.l2_loss(value)
+        return reg

@@ -25,9 +25,10 @@ tf.app.flags.DEFINE_integer("from_step", -1,
                             "Continue training from a checkpoint")
 tf.app.flags.DEFINE_integer("batch_size", 8, "Batch size")
 tf.app.flags.DEFINE_float("learning_rate", 0.0001, "Learning rate")
+tf.app.flags.DEFINE_float("beta", 0.01, "Beta")
 tf.app.flags.DEFINE_integer("log_period", 5, "Log period")
 tf.app.flags.DEFINE_integer("val_period", 25, "Validation period")
-tf.app.flags.DEFINE_integer("save_period", 200, "Saving period")
+tf.app.flags.DEFINE_integer("save_period", 1000, "Saving period")
 tf.app.flags.DEFINE_integer("no_epoch", 1000, "Number of epoches")
 tf.app.flags.DEFINE_boolean("verbose", False, "Verbose mode")
 
@@ -68,6 +69,7 @@ def _train(
         from_step,
         batch_size,
         learning_rate,
+        beta,
         log_period,
         val_period,
         save_period,
@@ -94,9 +96,10 @@ def _train(
 
         # Tensors
         aggr = FCAggregator.create_model(variables=FCAggregator.create_variables(
-            graph=graph, dims=[1008, 512, 16]), name="aggr")
+            graph=graph, dims=[1008, 2048, 2048, 16]), name="aggr")
         forward_op = aggr.forward(inputs)
-        loss_op = _get_loss_op(forward_op, labels)
+        reg_op = aggr.regularizer()
+        loss_op = _get_loss_op(forward_op, labels) + beta * reg_op
         train_op = _get_train_op(loss_op, tf.Variable(step, trainable=False),
                                  learning_rate)
         infer_op = _get_infer_op(forward_op)
@@ -189,6 +192,7 @@ def main():
         FLAGS.from_step,
         FLAGS.batch_size,
         FLAGS.learning_rate,
+        FLAGS.beta,
         FLAGS.log_period,
         FLAGS.val_period,
         FLAGS.save_period,
