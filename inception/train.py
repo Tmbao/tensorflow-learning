@@ -7,9 +7,10 @@ import os
 
 import numpy as np
 import tensorflow as tf
+import tensorflow.contrib.slim as slim
 
 from data import Data
-from nets.fc_aggregator import FCAggregator
+from nets.fcnet import FCNet
 from summarizer import ScalarSummarizer
 
 DEFAULT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -44,22 +45,12 @@ def _get_loss_op(logits, labels):
     return tf.reduce_mean(losses)
 
 
-def _get_train_op(loss_op, step, learning_rate):
-    return tf.train.AdamOptimizer(learning_rate).minimize(loss_op, global_step=step)
+def _get_train_op(loss_op, learning_rate):
+    return tf.train.AdamOptimizer(learning_rate).minimize(loss_op)
 
 
 def _get_infer_op(logits):
     return tf.argmax(logits, 1)
-
-
-def _save_model(nn, sess, saving_dir):
-    _log("-SAVE- start")
-    if not os.path.exists(saving_dir):
-        os.makedirs(saving_dir)
-
-    nn.save(sess, saving_dir)
-    _log("-SAVE- done")
-
 
 def _train(
         train_dat,
@@ -95,19 +86,18 @@ def _train(
         labels = tf.placeholder("float32", shape=(None, 16))
 
         # Tensors
-        aggr = FCAggregator.create_model(variables=FCAggregator.create_variables(
-            graph=graph, dims=[1008, 2048, 2048, 16]), name="aggr")
-        forward_op = aggr.forward(inputs)
-        reg_op = aggr.regularizer()
-        loss_op = _get_loss_op(forward_op, labels) + beta * reg_op
-        train_op = _get_train_op(loss_op, tf.Variable(step, trainable=False),
-                                 learning_rate)
+        forward_op = FCNet(dims=[2048, 2048, 16], graph=graph, beta=beta).forward(inputs)
+        reg_op = tf.add_n(tf.losses.get_regularization_losses())
+        loss_op = _get_loss_op(forward_op, labels) + reg_op
+        train_op = _get_train_op(loss_op, learning_rate)
         infer_op = _get_infer_op(forward_op)
+
+        saver = tf.train.Saver()
 
         sess.run(tf.global_variables_initializer())
         if from_step >= 0:
             _log("restoring the model")
-            aggr.restore(sess, os.path.join(chkpnt_dir, str(from_step)))
+            saver.restore(sess, os.path.join(chkpnt_dir, str(from_step)))
 
         for epoch in range(no_epoch):
             _log("{} epoch = {}".format(datetime.datetime.now(), epoch))
@@ -132,8 +122,9 @@ def _train(
 
                 # Save the current model
                 if step % save_period == 0:
-                    _save_model(aggr, sess, os.path.join(
-                        chkpnt_dir, str(step)))
+                    _log("-SAVE- start")
+                    saver.save(sess, os.path.join(chkpnt_dir, str(step)))
+                    _log("-SAVE- done")
 
                 # Perform validation
                 if step > 0 and step % val_period == 0:
@@ -143,10 +134,9 @@ def _train(
                     predictions = []
                     losses = []
                     for val_inputs, val_labels, _ in valid_dat.batches(batch_size):
-                        val_inputs = np.squeeze(val_inputs)
 
                         # Create food
-                        food = {labels: val_labels, inputs: val_inputs}
+                        food = {labels: val_labels, inputs: np.squeeze(val_inputs)}
 
                         infer_val, loss_val, = sess.run(
                             [infer_op, loss_op], feed_dict=food)
@@ -156,8 +146,7 @@ def _train(
                         predictions = np.concatenate([predictions, infer_val])
                         losses.append(loss_val)
 
-                    val_acc = np.mean(
-                        np.equal(predictions[:len(ground_truth)], ground_truth))
+                    val_acc = np.mean(np.equal(predictions, ground_truth))
                     val_loss = np.mean(np.array(losses))
 
                     _log("-VALID- {} done: loss={:.4}, acc={:.4}"
@@ -171,7 +160,7 @@ def _train(
                 step += 1
 
         # Save at the last step
-        _save_model(aggr, sess, os.path.join(chkpnt_dir, str(step)))
+        saver.save(sess, os.path.join(chkpnt_dir, str(step)))
 
 
 def main():

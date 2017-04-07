@@ -70,11 +70,11 @@ class Data:
                                 for name in os.listdir(path)
                                 if not name.startswith(".") and
                                 not name.startswith("labels") and
-                                name.endswith(suffix)]))
+                                name.lower().endswith(suffix)]))
 
     def _load_objects(self, objects):
         def _load_image(path):
-            if self._suffix in [".jpg"]:
+            if self._suffix.lower() in [".jpg"]:
                 return cv2.imread(path)
             else:
                 return np.load(path)
