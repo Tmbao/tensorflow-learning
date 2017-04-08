@@ -40,8 +40,7 @@ def _log(message):
 
 
 def _get_loss_op(logits, labels):
-    losses = tf.nn.softmax_cross_entropy_with_logits(labels=labels,
-                                                     logits=logits)
+    losses = tf.nn.softmax_cross_entropy_with_logits(labels=labels, logits=logits)
     return tf.reduce_mean(losses)
 
 
