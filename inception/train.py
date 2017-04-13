@@ -9,7 +9,7 @@ import numpy as np
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
 
-from data import Data
+from data_irholes import Data
 from nets.fcnet import FCNet
 from summarizer import ScalarSummarizer
 

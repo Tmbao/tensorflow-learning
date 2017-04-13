@@ -1,6 +1,10 @@
 """
 Data provider for trainer.
+
+This data can be downloaded from https://sites.google.com/view/shrec17/dataset.
+It contains views extracted from 3d objects of irregular holes.
 """
+import csv
 import os
 import re
 
@@ -22,17 +26,25 @@ class Data:
             prefix (str): Path to data directory.
             tag (str): Either train or valid.
         """
-        def _initialize_labels(path):
-            path = os.path.join(path, "labels.txt")
-            with open(path, "r") as flabel:
-                labels = [line.strip() for line in flabel.readlines()]
-            labels = list(set(labels))
-            label2id = {key: value for value, key in enumerate(labels)}
-            return label2id
+        def _initialize_labels():
+            pcate = os.path.join(prefix, "all_cates.txt")
+            with open(pcate, "r") as fcate:
+                cates = [line.strip() for fcate in flabel.readlines()]
+            cates = list(set(cates))
+            cate2id = {key: value for value, key in enumerate(cates)}
+
+            plabel = os.path.join(prefix, tag + ".csv")
+            label2cate = {}
+            with open(plabel, "r") as flabel:
+                reader = csv.reader(flabel)
+                for row in reader:
+                    label2cate[row[0]] = row[1]
+            
+            return {key: cate2id[value] for key, value in label2cate.items}
 
         self._objects = self._get_all_files(
             os.path.join(prefix, tag), suffix="")
-        self._label2id = _initialize_labels(os.path.join(prefix, tag))
+        self._label2id = _initialize_labels()
         self._size = len(self._objects)
         self._no_views = no_views
         self._no_categories = no_categories
@@ -83,8 +95,7 @@ class Data:
         labels = []
         for obj in objects:
             # Get labels
-            category = re.search(
-                r"([a-z]+)[^a-z]", os.path.basename(obj)).group(1)
+            category = os.path.basename(obj)
             logits = [0.0] * self._no_categories
             logits[self._label2id[category]] = 1.0
             labels.append(logits)
