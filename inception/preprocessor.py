@@ -74,11 +74,15 @@ def _train(
             _log("saved {}".format(os.path.join(path, "data.{}.{}".format(FLAGS.model, FLAGS.summarizer))))
 
 
+def _filter_fn(prefix):
+    return os.path.isfile(os.path.join(prefix, "data.{}.{}.npy".format(FLAGS.model, FLAGS.summarizer)))
+
+
 def main():
     train_dat = Data(FLAGS.data_dir, "train", FLAGS.no_views,
-                     no_categories=100, suffix=".jpg")
+                     no_categories=100, suffix=".jpg", filter_fn=_filter_fn)
     valid_dat = Data(FLAGS.data_dir, "valid", FLAGS.no_views,
-                     no_categories=100, suffix=".jpg")
+                     no_categories=100, suffix=".jpg", filter_fn=_filter_fn)
     _train(
         train_dat,
         valid_dat,
