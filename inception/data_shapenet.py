@@ -104,10 +104,10 @@ class Data:
                 category = os.path.basename(obj)
                 logits = [0.0] * self._no_categories
                 logits[self._label2id[category]] = 1.0
-                labels.append(logits)
                 views = self._get_all_files(obj, suffix=self._suffix)
                 for i in range(self._no_views):
                     inputs[i].append(_load_image(views[i]))
+                labels.append(logits)
             except:
                 print("An error occurred at {}.".format(obj))
 
