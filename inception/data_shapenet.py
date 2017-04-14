@@ -29,18 +29,22 @@ class Data:
         def _initialize_labels():
             pcate = os.path.join(prefix, "all_cates.txt")
             with open(pcate, "r") as fcate:
-                cates = [line.strip() for fcate in flabel.readlines()]
-            cates = list(set(cates))
-            cate2id = {key: value for value, key in enumerate(cates)}
+                cates = [line.strip() for line in fcate.readlines()]
+            cates = list(set(cates))[1:]
+            cate2id = {int(key): value for value, key in enumerate(cates)}
 
             plabel = os.path.join(prefix, tag + ".csv")
             label2cate = {}
             with open(plabel, "r") as flabel:
                 reader = csv.reader(flabel)
+                firstln = True
                 for row in reader:
+                    if firstln:
+                         firstln = False
+                         continue
                     label2cate[row[0]] = row[1]
             
-            return {key: cate2id[value] for key, value in label2cate.items}
+            return {key: cate2id[int(value)] for key, value in label2cate.items()}
 
         self._objects = self._get_all_files(
             os.path.join(prefix, tag), suffix="")

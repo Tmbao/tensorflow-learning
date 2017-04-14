@@ -76,9 +76,9 @@ def _train(
 
 def main():
     train_dat = Data(FLAGS.data_dir, "train", FLAGS.no_views,
-                     no_categories=16, suffix=".jpg")
+                     no_categories=100, suffix=".jpg")
     valid_dat = Data(FLAGS.data_dir, "valid", FLAGS.no_views,
-                     no_categories=16, suffix=".jpg")
+                     no_categories=100, suffix=".jpg")
     _train(
         train_dat,
         valid_dat,
