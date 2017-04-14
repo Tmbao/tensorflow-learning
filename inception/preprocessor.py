@@ -20,10 +20,13 @@ tf.app.flags.DEFINE_string("data_dir", "{}/data".format(DEFAULT_DIR),
 tf.app.flags.DEFINE_integer("no_views", 26, "Number of views")
 tf.app.flags.DEFINE_string("model", "inceptionv3", "Model name [inceptionv3, vgg16]")
 tf.app.flags.DEFINE_string("summarizer", "pool", "Summarization method [pool, concat]")
+tf.app.flags.DEFINE_boolean("overwrite", True, "Should the program overwrite existing files?")
+tf.app.flags.DEFINE_boolean("verbose", False, "Verbose mode")
 
 
 def _log(message):
-    print(message)
+    if FLAGS.verbose:
+        print(message)
 
 def _get_model():
     if FLAGS.model == "inceptionv3":
@@ -75,7 +78,10 @@ def _train(
 
 
 def _filter_fn(prefix):
-    return not os.path.isfile(os.path.join(prefix, "data.{}.{}.npy".format(FLAGS.model, FLAGS.summarizer)))
+    if not FLAGS.overwrite:
+        return not os.path.isfile(os.path.join(prefix, "data.{}.{}.npy".format(FLAGS.model, FLAGS.summarizer)))
+    else:
+        return True
 
 
 def main():

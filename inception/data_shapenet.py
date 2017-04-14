@@ -99,13 +99,16 @@ class Data:
         inputs = [[] for _ in range(self._no_views)]
         labels = []
         for obj in objects:
-            # Get labels
-            category = os.path.basename(obj)
-            logits = [0.0] * self._no_categories
-            logits[self._label2id[category]] = 1.0
-            labels.append(logits)
-            views = self._get_all_files(obj, suffix=self._suffix)
-            for i in range(self._no_views):
-                inputs[i].append(_load_image(views[i]))
+            try:
+                # Get labels
+                category = os.path.basename(obj)
+                logits = [0.0] * self._no_categories
+                logits[self._label2id[category]] = 1.0
+                labels.append(logits)
+                views = self._get_all_files(obj, suffix=self._suffix)
+                for i in range(self._no_views):
+                    inputs[i].append(_load_image(views[i]))
+            except:
+                print("An error occurred at {}.".format(obj))
 
         return np.array(inputs), np.array(labels), objects
