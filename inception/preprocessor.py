@@ -75,7 +75,7 @@ def _train(
 
 
 def _filter_fn(prefix):
-    return os.path.isfile(os.path.join(prefix, "data.{}.{}.npy".format(FLAGS.model, FLAGS.summarizer)))
+    return not os.path.isfile(os.path.join(prefix, "data.{}.{}.npy".format(FLAGS.model, FLAGS.summarizer)))
 
 
 def main():
