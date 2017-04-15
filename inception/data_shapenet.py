@@ -105,6 +105,7 @@ class Data:
                 logits = [0.0] * self._no_categories
                 logits[self._label2id[category]] = 1.0
                 views = self._get_all_files(obj, suffix=self._suffix)
+                assert(self._no_views == len(views))
                 for i in range(self._no_views):
                     inputs[i].append(_load_image(views[i]))
                 labels.append(logits)
