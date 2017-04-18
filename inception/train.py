@@ -9,7 +9,7 @@ import numpy as np
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
 
-from data_irholes import Data
+from data_shapenet import Data
 from nets.fcnet import FCNet
 from summarizer import ScalarSummarizer
 
@@ -82,10 +82,10 @@ def _train(
 
         # Place holders
         inputs = tf.placeholder("float32", shape=(None, 1008))
-        labels = tf.placeholder("float32", shape=(None, 16))
+        labels = tf.placeholder("float32", shape=(None, 100))
 
         # Tensors
-        forward_op = FCNet(dims=[2048, 2048, 16], graph=graph, beta=beta).forward(inputs)
+        forward_op = FCNet(dims=[2048, 2048, 100], graph=graph, beta=beta).forward(inputs)
         reg_op = tf.add_n(tf.losses.get_regularization_losses())
         loss_op = _get_loss_op(forward_op, labels) + reg_op
         train_op = _get_train_op(loss_op, learning_rate)
@@ -164,9 +164,9 @@ def _train(
 
 def main():
     train_dat = Data(FLAGS.data_dir, "train", 1,
-                     no_categories=16, suffix=".inceptionv3.npy")
+                     no_categories=100, suffix=".inceptionv3.pool.npy")
     valid_dat = Data(FLAGS.data_dir, "valid", 1,
-                     no_categories=16, suffix=".inceptionv3.npy")
+                     no_categories=100, suffix=".inceptionv3.pool.npy")
     summ = ScalarSummarizer(FLAGS.summ_dir, {
         "training_loss": "float32",
         "validation_loss": "float32",

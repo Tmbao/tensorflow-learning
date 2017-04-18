@@ -99,7 +99,7 @@ class Data:
         inputs = [[] for _ in range(self._no_views)]
         labels = []
         for obj in objects:
-            try:
+            #try:
                 # Get labels
                 category = os.path.basename(obj)
                 logits = [0.0] * self._no_categories
@@ -109,7 +109,7 @@ class Data:
                 for i in range(self._no_views):
                     inputs[i].append(_load_image(views[i]))
                 labels.append(logits)
-            except:
-                print("An error occurred at {}.".format(obj))
+            #except:
+            #    print("An error occurred at {}.".format(obj))
 
         return np.array(inputs), np.array(labels), objects
