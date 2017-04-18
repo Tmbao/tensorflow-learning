@@ -102,7 +102,7 @@ def _train(
         forward_op = FCNet(dims=[2048, 2048, 100], graph=graph, beta=beta).forward(inputs)
         reg_op = tf.add_n(tf.losses.get_regularization_losses())
         loss_op = _get_loss_op(forward_op, labels) + reg_op
-        train_op = _get_train_op(loss_op, learning_rate)
+        train_op = _get_train_op(loss_op, learning_rate, global_step)
         infer_op = _get_infer_op(forward_op)
 
         saver = tf.train.Saver()
@@ -200,7 +200,7 @@ def main():
         FLAGS.log_period,
         FLAGS.val_period,
         FLAGS.save_period,
-        FLAGS.no_epoch)
+        FLAGS.no_epochs)
 
 
 if __name__ == "__main__":
