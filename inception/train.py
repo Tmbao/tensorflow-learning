@@ -25,12 +25,14 @@ tf.app.flags.DEFINE_string("summ_dir", "{}/summary".format(DEFAULT_DIR),
 tf.app.flags.DEFINE_integer("from_step", -1,
                             "Continue training from a checkpoint")
 tf.app.flags.DEFINE_integer("batch_size", 8, "Batch size")
-tf.app.flags.DEFINE_float("learning_rate", 0.0001, "Learning rate")
-tf.app.flags.DEFINE_float("beta", 0.01, "Beta")
+tf.app.flags.DEFINE_float("lr", 0.001, "Learning rate")
+tf.app.flags.DEFINE_float("lr_decay", 0.1, "Learning rate decay factor")
+tf.app.flags.DEFINE_float("no_epochs_decay", 50, "Number of epochs per decay")
+tf.app.flags.DEFINE_float("beta", 0.004, "Beta")
 tf.app.flags.DEFINE_integer("log_period", 5, "Log period")
 tf.app.flags.DEFINE_integer("val_period", 25, "Validation period")
 tf.app.flags.DEFINE_integer("save_period", 1000, "Saving period")
-tf.app.flags.DEFINE_integer("no_epoch", 1000, "Number of epoches")
+tf.app.flags.DEFINE_integer("no_epochs", 20000, "Number of epoches")
 tf.app.flags.DEFINE_boolean("verbose", False, "Verbose mode")
 
 
@@ -44,12 +46,13 @@ def _get_loss_op(logits, labels):
     return tf.reduce_mean(losses)
 
 
-def _get_train_op(loss_op, learning_rate):
-    return tf.train.AdamOptimizer(learning_rate).minimize(loss_op)
+def _get_train_op(loss_op, learning_rate, global_step):
+    return tf.train.AdamOptimizer(learning_rate).minimize(loss_op, global_step=global_step)
 
 
 def _get_infer_op(logits):
     return tf.argmax(logits, 1)
+
 
 def _train(
         train_dat,
@@ -58,7 +61,9 @@ def _train(
         chkpnt_dir,
         from_step,
         batch_size,
-        learning_rate,
+        lr,
+        lr_decay,
+        no_epochs_decay,
         beta,
         log_period,
         val_period,
@@ -80,11 +85,20 @@ def _train(
 
         _log("initializing the model")
 
+        # ???
+        decay_steps = train_size / batch_size * no_epochs_decay
+
         # Place holders
         inputs = tf.placeholder("float32", shape=(None, 1008))
         labels = tf.placeholder("float32", shape=(None, 100))
 
         # Tensors
+        global_step = tf.Variable(step, trainable=False)
+        learning_rate = tf.train.exponential_decay(
+            lr,
+            global_step,
+            decay_steps,
+            lr_decay)
         forward_op = FCNet(dims=[2048, 2048, 100], graph=graph, beta=beta).forward(inputs)
         reg_op = tf.add_n(tf.losses.get_regularization_losses())
         loss_op = _get_loss_op(forward_op, labels) + reg_op
@@ -106,7 +120,7 @@ def _train(
                 trn_inputs = np.squeeze(trn_inputs)
 
                 # Create food
-                food = {labels: trn_labels, inputs: trn_inputs}
+                food = {labels: trn_labels, inputs: trn_inputs, "keep_prob:0": 0.5}
 
                 # Feed the model
                 _, _, loss_val = sess.run([train_op, infer_op, loss_op],
@@ -122,7 +136,7 @@ def _train(
                 # Save the current model
                 if step % save_period == 0:
                     _log("-SAVE- start")
-                    saver.save(sess, os.path.join(chkpnt_dir, str(step)))
+                    saver.save(sess, os.path.join(chkpnt_dir, str(step)), global_step=step)
                     _log("-SAVE- done")
 
                 # Perform validation
@@ -135,7 +149,7 @@ def _train(
                     for val_inputs, val_labels, _ in valid_dat.batches(batch_size):
 
                         # Create food
-                        food = {labels: val_labels, inputs: np.squeeze(val_inputs)}
+                        food = {labels: val_labels, inputs: np.squeeze(val_inputs), "keep_prob:0": 1}
 
                         infer_val, loss_val, = sess.run(
                             [infer_op, loss_op], feed_dict=food)
@@ -159,7 +173,7 @@ def _train(
                 step += 1
 
         # Save at the last step
-        saver.save(sess, os.path.join(chkpnt_dir, str(step)))
+        saver.save(sess, os.path.join(chkpnt_dir, str(step)), global_step=step)
 
 
 def main():
@@ -179,7 +193,9 @@ def main():
         FLAGS.chkpnt_dir,
         FLAGS.from_step,
         FLAGS.batch_size,
-        FLAGS.learning_rate,
+        FLAGS.lr,
+        FLAGS.lr_decay,
+        FLAGS.no_epochs_decay,
         FLAGS.beta,
         FLAGS.log_period,
         FLAGS.val_period,
