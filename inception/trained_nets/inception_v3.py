@@ -13,6 +13,7 @@ _NET_DIR = os.path.join(_SOURCE_DIR, "inception_v3_net")
 _GRAPH_DEF_FILE = "classify_image_graph_def.pb"
 
 _INPUT_TENSOR_NAME = "DecodeJpeg:0"
+_FEATURE_TENSOR_NAME = "pool_3:0"
 _SOFT_MAX_TENSOR_NAME = "softmax:0"
 
 
@@ -43,7 +44,7 @@ class InceptionV3:
                 tf.import_graph_def(graph_def, name="")
 
         self._input = self._graph.get_tensor_by_name(_INPUT_TENSOR_NAME)
-        self._outputs = self._graph.get_tensor_by_name(_SOFT_MAX_TENSOR_NAME)
+        self._outputs = self._graph.get_tensor_by_name(_FEATURE_TENSOR_NAME)
         self._session = tf.Session(graph=self._graph)
 
     def classify(self, inputs):

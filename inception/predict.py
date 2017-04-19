@@ -4,7 +4,7 @@
 import tensorflow as tf
 
 import cv2
-from nets.inception_v3 import InceptionV3
+from trained_nets.inception_v3 import InceptionV3
 
 tf.app.flags.DEFINE_string("input", "", "Specify an input image.")
 
@@ -17,11 +17,11 @@ def _check_flags():
 
 
 def main(_):
-    _check_flags()
+    # _check_flags()
 
-    image = cv2.imread(FLAGS.input)
+    # image = cv2.imread(FLAGS.input)
     network = InceptionV3()
-    print(network.classify([image]).shape)
+    # print(network.classify([image]).shape)
 
 
 if __name__ == '__main__':
