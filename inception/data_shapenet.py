@@ -30,7 +30,8 @@ class Data:
             pcate = os.path.join(prefix, "all_cates.txt")
             with open(pcate, "r") as fcate:
                 cates = [line.strip() for line in fcate.readlines()]
-            cates = list(set(cates))[1:]
+            cates = list(set(cates))
+            cates = cates[1:]
             cate2id = {int(key): value for value, key in enumerate(cates)}
 
             plabel = os.path.join(prefix, tag + ".csv")
