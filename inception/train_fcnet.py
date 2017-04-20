@@ -78,7 +78,7 @@ def _train(
         decay_steps = train_size / FLAGS.batch_size * FLAGS.no_epochs_decay
 
         # Place holders
-        inputs = tf.placeholder("float32", shape=(None, 1008))
+        inputs = tf.placeholder("float32", shape=(None, 2048))
         labels = tf.placeholder("float32", shape=(None, 100))
 
         # Tensors
@@ -97,9 +97,9 @@ def _train(
         saver = tf.train.Saver()
 
         sess.run(tf.global_variables_initializer())
-        if from_step >= 0:
+        if FLAGS.from_step >= 0:
             _log("restoring the model")
-            saver.restore(sess, os.path.join(FLAGS.chkpnt_dir, str(from_step)))
+            saver.restore(sess, os.path.join(FLAGS.chkpnt_dir, str(FLAGS.from_step)))
 
         for epoch in range(FLAGS.no_epoch):
             _log("{} epoch = {}".format(datetime.datetime.now(), epoch))
