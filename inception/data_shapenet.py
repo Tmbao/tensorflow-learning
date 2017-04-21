@@ -46,10 +46,17 @@ class Data:
             
             return {key: cate2id[int(value)] for key, value in label2cate.items()}
 
+        def _initialize_groups():
+            groups = [[] for _ in range(self._no_categories)]
+            for obj in self._objects:
+                category = os.path.basename(obj)
+                groups[self._label2id[category]].append(category)
+
         self._objects = self._get_all_files(os.path.join(prefix, tag), suffix="")
         if filter_fn != None:
             self._objects = list(filter(filter_fn, self._objects))
         self._label2id = _initialize_labels()
+        self._groups = _initialize_groups()
         self._size = len(self._objects)
         self._no_views = no_views
         self._no_categories = no_categories
@@ -60,6 +67,9 @@ class Data:
         Get the number of examples.
         """
         return self._size
+
+    def groups(self, idx):
+        return self._groups[idx]
 
     def shuffle(self):
         """
