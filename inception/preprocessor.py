@@ -20,7 +20,7 @@ tf.app.flags.DEFINE_string("data_dir", "{}/data".format(DEFAULT_DIR),
 tf.app.flags.DEFINE_integer("no_views", 26, "Number of views")
 tf.app.flags.DEFINE_string("model", "inceptionv3", "Model name [inceptionv3, vgg16]")
 tf.app.flags.DEFINE_string("summarizer", "pool", "Summarization method [pool, concat]")
-tf.app.flags.DEFINE_boolean("overwrite", True, "Should the program overwrite existing files?")
+tf.app.flags.DEFINE_boolean("overwrite", False, "Should the program overwrite existing files?")
 tf.app.flags.DEFINE_boolean("verbose", False, "Verbose mode")
 
 
@@ -50,6 +50,7 @@ def _summarize(inputs):
 def _train(
         train_dat,
         valid_dat,
+        test_dat
         no_views):
 
     train_size = train_dat.size()
@@ -76,6 +77,15 @@ def _train(
             np.save(os.path.join(path, "data.{}.{}".format(FLAGS.model, FLAGS.summarizer)), outputs[index])
             _log("saved {}".format(os.path.join(path, "data.{}.{}".format(FLAGS.model, FLAGS.summarizer))))
 
+    for b_inputs, _, b_paths in test_dat.batches(1):
+        outputs = [cnn.classify(b_input) for b_input in b_inputs]
+        # Merge outputs from CNN
+        outputs = _summarize(outputs)
+
+        for index, path in enumerate(b_paths):
+            np.save(os.path.join(path, "data.{}.{}".format(FLAGS.model, FLAGS.summarizer)), outputs[index])
+            _log("saved {}".format(os.path.join(path, "data.{}.{}".format(FLAGS.model, FLAGS.summarizer))))
+
 
 def _filter_fn(prefix):
     if not FLAGS.overwrite:
@@ -89,9 +99,12 @@ def main():
                      no_categories=100, suffix=".jpg", filter_fn=_filter_fn)
     valid_dat = Data(FLAGS.data_dir, "valid", FLAGS.no_views,
                      no_categories=100, suffix=".jpg", filter_fn=_filter_fn)
+    test_dat = Data(FLAGS.data_dir, "test", FLAGS.no_views,
+                    no_categories=100, suffix=".jpg", filter_fn=_filter_fn)
     _train(
         train_dat,
         valid_dat,
+        test_dat,
         FLAGS.no_views)
 
 
