@@ -50,7 +50,7 @@ def _summarize(inputs):
 def _train(
         train_dat,
         valid_dat,
-        test_dat
+        test_dat,
         no_views):
 
     train_size = train_dat.size()

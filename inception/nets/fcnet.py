@@ -19,5 +19,5 @@ class FCNet:
                 outputs = slim.layers.fully_connected(outputs, dim, 
                     activation_fn=tf.nn.relu,
                     weights_regularizer=slim.l2_regularizer(self._beta))
-                outputs = slim.dropout(outputs, keep_prob)
+                # outputs = slim.dropout(outputs, keep_prob)
             return outputs

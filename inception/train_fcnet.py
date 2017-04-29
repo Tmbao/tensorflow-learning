@@ -101,7 +101,7 @@ def _train(
             _log("restoring the model")
             saver.restore(sess, os.path.join(FLAGS.chkpnt_dir, str(FLAGS.from_step)))
 
-        for epoch in range(FLAGS.no_epoch):
+        for epoch in range(FLAGS.no_epochs):
             _log("{} epoch = {}".format(datetime.datetime.now(), epoch))
             train_dat.shuffle()
 
