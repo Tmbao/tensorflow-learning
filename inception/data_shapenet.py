@@ -56,11 +56,12 @@ class Data:
         self._objects = self._get_all_files(os.path.join(prefix, tag), suffix="")
         if filter_fn != None:
             self._objects = list(filter(filter_fn, self._objects))
+
+        self._no_categories = no_categories
         self._label2id = _initialize_labels()
         self._groups = _initialize_groups()
         self._size = len(self._objects)
         self._no_views = no_views
-        self._no_categories = no_categories
         self._suffix = suffix
 
     def size(self):
