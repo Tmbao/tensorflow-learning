@@ -23,6 +23,7 @@ tf.app.flags.DEFINE_string("ranklist_dir", "{}/ranklist".format(DEFAULT_DIR),
                            "Ranklist directory")
 tf.app.flags.DEFINE_integer("from_step", -1,
                             "Continue training from a checkpoint")
+tf.app.flags.DEFINE_float("beta", 0.004, "Beta")
 tf.app.flags.DEFINE_integer("batch_size", 8, "Batch size")
 tf.app.flags.DEFINE_boolean("verbose", False, "Verbose mode")
 
