@@ -38,11 +38,11 @@ def _get_infer_op(logits):
 
 def _compute(
         train_dat,
-        valid_dat):
+        test_dat):
 
     train_size = train_dat.size()
     _log("training size = {}".format(train_size))
-    _log("validation size = {}".format(valid_dat.size()))
+    _log("test size = {}".format(test_dat.size()))
 
     # Create a new graph
     graph = tf.Graph()
@@ -68,7 +68,7 @@ def _compute(
             _log("restoring the model")
             saver.restore(sess, os.path.join(FLAGS.chkpnt_dir, str(FLAGS.from_step)))
 
-        for val_inputs, val_labels, val_paths in valid_dat.batches(FLAGS.batch_size):
+        for val_inputs, val_labels, val_paths in test_dat.batches(FLAGS.batch_size):
             # Create food
             food = {labels: val_labels, inputs: np.squeeze(val_inputs), "keep_prob:0": 1}
 
@@ -84,11 +84,11 @@ def _compute(
 def main():
     train_dat = Data(FLAGS.data_dir, "train", 1,
                      no_categories=100, suffix=".inceptionv3.pool.npy")
-    valid_dat = Data(FLAGS.data_dir, "valid", 1,
+    test_dat = Data(FLAGS.data_dir, "test", 1,
                      no_categories=100, suffix=".inceptionv3.pool.npy")
     _compute(
         train_dat,
-        valid_dat)
+        test_dat)
 
 
 if __name__ == "__main__":
