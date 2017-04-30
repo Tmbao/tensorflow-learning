@@ -45,13 +45,15 @@ class Data:
                          continue
                     label2cate[row[0]] = row[1]
             
-            return {key: cate2id[int(value)] for key, value in label2cate.items()}
+            return {int(key): cate2id[int(value)] for key, value in label2cate.items()}
 
         def _initialize_groups():
             groups = [[] for _ in range(self._no_categories)]
             for obj in self._objects:
                 category = os.path.basename(obj)
-                groups[self._label2id[category]].append(category)
+                groups[self._label2id[int(category)]].append(category)
+
+            return groups
 
         self._objects = self._get_all_files(os.path.join(prefix, tag), suffix="")
         if filter_fn != None:
@@ -111,17 +113,14 @@ class Data:
         inputs = [[] for _ in range(self._no_views)]
         labels = []
         for obj in objects:
-            #try:
-                # Get labels
-                category = os.path.basename(obj)
-                logits = [0.0] * self._no_categories
-                logits[self._label2id[category]] = 1.0
-                views = self._get_all_files(obj, suffix=self._suffix)
-                assert(self._no_views == len(views))
-                for i in range(self._no_views):
-                    inputs[i].append(_load_image(views[i]))
-                labels.append(logits)
-            #except:
-            #    print("An error occurred at {}.".format(obj))
+            # Get labels
+            category = os.path.basename(obj)
+            logits = [0.0] * self._no_categories
+            logits[self._label2id[int(category)]] = 1.0
+            views = self._get_all_files(obj, suffix=self._suffix)
+            assert(self._no_views == len(views))
+            for i in range(self._no_views):
+                inputs[i].append(_load_image(views[i]))
+            labels.append(logits)
 
         return np.array(inputs), np.array(labels), objects
