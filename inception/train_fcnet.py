@@ -94,7 +94,7 @@ def _train(
         train_op = _get_train_op(loss_op, learning_rate, global_step)
         infer_op = _get_infer_op(forward_op)
 
-        saver = tf.train.Saver()
+        saver = tf.train.Saver(tf.global_variables())
 
         sess.run(tf.global_variables_initializer())
         if FLAGS.from_step >= 0:
