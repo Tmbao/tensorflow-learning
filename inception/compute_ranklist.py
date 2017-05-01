@@ -52,7 +52,6 @@ def _compute(test_dat):
 
         # Place holders
         inputs = tf.placeholder("float32", shape=(None, 2048))
-        labels = tf.placeholder("float32", shape=(None, 100))
 
         # Tensors
         forward_op = FCNet(dims=[2048, 2048, 100], graph=graph, beta=FLAGS.beta).forward(inputs)
@@ -79,13 +78,13 @@ def _compute(test_dat):
 
         groups = [[] for _ in range(100)]
         for idx in range(test_dat.size()):
-            groups[labels[idx]].append(os.path.basename(paths[idx]))
+            groups[int(labels[idx])].append(os.path.basename(paths[idx]))
 
         
         for idx in range(test_dat.size()):
             ranklist_path = os.path.join(FLAGS.ranklist_dir, os.path.basename(paths[idx]))
             with open(ranklist_path, "w") as frl:
-                frl.write("\n".join(groups(labels[idx]))
+                frl.write("\n".join(groups[int(labels[idx])]))
             _log("Wrote to {}.".format(ranklist_path))
 
 
