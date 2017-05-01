@@ -2,7 +2,7 @@
 Data provider for trainer.
 
 This data can be downloaded from https://sites.google.com/view/shrec17/dataset.
-It contains views extracted from 3d objects of irregular holes.
+It contains views extracted from cad objects.
 """
 import csv
 import os
@@ -18,7 +18,7 @@ class Data:
     Data provider for tensorflow.
     """
 
-    def __init__(self, prefix, tag, no_views=26, no_categories=1000, suffix="", filter_fn=None):
+    def __init__(self, prefix, tag, no_views=26, no_categories=1000, suffix="", is_test=False, filter_fn=None):
         """
         Construct a data provider object.
 
@@ -47,21 +47,15 @@ class Data:
             
             return {int(key): cate2id[int(value)] for key, value in label2cate.items()}
 
-        def _initialize_groups():
-            groups = [[] for _ in range(self._no_categories)]
-            for obj in self._objects:
-                category = os.path.basename(obj)
-                groups[self._label2id[int(category)]].append(category)
-
-            return groups
-
         self._objects = self._get_all_files(os.path.join(prefix, tag), suffix="")
         if filter_fn != None:
             self._objects = list(filter(filter_fn, self._objects))
 
+        self._is_test = is_test
+        if not is_test:
+            self._label2id = _initialize_labels()
+
         self._no_categories = no_categories
-        self._label2id = _initialize_labels()
-        self._groups = _initialize_groups()
         self._size = len(self._objects)
         self._no_views = no_views
         self._suffix = suffix
@@ -71,9 +65,6 @@ class Data:
         Get the number of examples.
         """
         return self._size
-
-    def groups(self, idx):
-        return self._groups[idx]
 
     def shuffle(self):
         """
@@ -116,7 +107,9 @@ class Data:
             # Get labels
             category = os.path.basename(obj)
             logits = [0.0] * self._no_categories
-            logits[self._label2id[int(category)]] = 1.0
+            if not self._is_test:
+                logits[self._label2id[int(category)]] = 1.0
+
             views = self._get_all_files(obj, suffix=self._suffix)
             assert(self._no_views == len(views))
             for i in range(self._no_views):

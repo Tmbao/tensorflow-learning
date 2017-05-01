@@ -37,12 +37,8 @@ def _get_infer_op(logits):
     return tf.argmax(logits, 1)
 
 
-def _compute(
-        train_dat,
-        test_dat):
+def _compute(test_dat):
 
-    train_size = train_dat.size()
-    _log("training size = {}".format(train_size))
     _log("test size = {}".format(test_dat.size()))
 
     # Create a new graph
@@ -67,29 +63,36 @@ def _compute(
         sess.run(tf.global_variables_initializer())
         if FLAGS.from_step >= 0:
             _log("restoring the model")
-            saver.restore(sess, os.path.join(FLAGS.chkpnt_dir, str(FLAGS.from_step) + "-" + str(FLAGS.from_step)))
+            saver.restore(sess, os.path.join(FLAGS.chkpnt_dir, "{0}-{0}".format(str(FLAGS.from_step))))
 
-        for val_inputs, val_labels, val_paths in test_dat.batches(FLAGS.batch_size):
+        labels = []
+        paths = []
+
+        for val_inputs, _, val_paths in test_dat.batches(FLAGS.batch_size):
             # Create food
-            food = {labels: val_labels, inputs: np.squeeze(val_inputs), "keep_prob:0": 1}
+            food = {inputs: np.squeeze(val_inputs), "keep_prob:0": 1}
 
             infer_val = sess.run(infer_op, feed_dict=food)
 
-            for idx in range(len(val_inputs)):
-                ranklist_path = os.path.join(FLAGS.ranklist_dir, os.path.basename(val_paths[idx]))
-                with open(ranklist_path, "w") as frl:
-                    frl.write("\n".join(train_dat.groups(infer_val[idx])))
-                _log("Wrote to {}.".format(ranklist_path))
+            labels = np.concatenate([labels, infer_val])
+            paths = np.concatenate([paths, val_paths])
+
+        groups = [[] for _ in range(100)]
+        for idx in range(test_dat.size()):
+            groups[labels[idx]].append(os.path.basename(paths[idx]))
+
+        
+        for idx in range(test_dat.size()):
+            ranklist_path = os.path.join(FLAGS.ranklist_dir, os.path.basename(paths[idx]))
+            with open(ranklist_path, "w") as frl:
+                frl.write("\n".join(groups(labels[idx]))
+            _log("Wrote to {}.".format(ranklist_path))
 
 
 def main():
-    train_dat = Data(FLAGS.data_dir, "train", 1,
+    test_dat = Data(FLAGS.data_dir, "test", 1, is_test=True,
                      no_categories=100, suffix=".inceptionv3.pool.npy")
-    test_dat = Data(FLAGS.data_dir, "test", 1,
-                     no_categories=100, suffix=".inceptionv3.pool.npy")
-    _compute(
-        train_dat,
-        test_dat)
+    _compute(test_dat)
 
 
 if __name__ == "__main__":
