@@ -67,16 +67,16 @@ def _compute(
         sess.run(tf.global_variables_initializer())
         if FLAGS.from_step >= 0:
             _log("restoring the model")
-            saver.restore(sess, os.path.join(FLAGS.chkpnt_dir, str(FLAGS.from_step)))
+            saver.restore(sess, os.path.join(FLAGS.chkpnt_dir, str(FLAGS.from_step) + "-" + str(FLAGS.from_step)))
 
         for val_inputs, val_labels, val_paths in test_dat.batches(FLAGS.batch_size):
             # Create food
             food = {labels: val_labels, inputs: np.squeeze(val_inputs), "keep_prob:0": 1}
 
-            infer_val, = sess.run(infer_op, feed_dict=food)
+            infer_val = sess.run(infer_op, feed_dict=food)
 
-            for idx in range(FLAGS.batch_size):
-                ranklist_path = os.path.join(FLAGS.ranklist_dir, os.paht.basename(val_paths[idx]))
+            for idx in range(len(val_inputs)):
+                ranklist_path = os.path.join(FLAGS.ranklist_dir, os.path.basename(val_paths[idx]))
                 with open(ranklist_path, "w") as frl:
                     frl.write("\n".join(train_dat.groups(infer_val[idx])))
                 _log("Wrote to {}.".format(ranklist_path))
