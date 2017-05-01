@@ -60,17 +60,17 @@ def _compute(valid_dat, test_dat):
         labels = tf.placeholder("float32", shape=(None, 100))
 
         # Tensors
-        forward_op = FCNet(dims=[2048, 2048, 100], graph=graph, beta=FLAGS.beta).forward(inputs)
+        forward_op = FCNet(dims=[2048, 2048, 100], beta=FLAGS.beta).forward(inputs)
         infer_op = _get_infer_op(forward_op)
         reg_op = tf.add_n(tf.losses.get_regularization_losses())
         loss_op = _get_loss_op(forward_op, labels) + reg_op
 
-        saver = tf.train.Saver()
-
         sess.run(tf.global_variables_initializer())
+
+        saver = tf.train.Saver(tf.global_variables())
         if FLAGS.from_step >= 0:
             _log("restoring the model")
-            saver.restore(sess, os.path.join(FLAGS.chkpnt_dir, "{0}-{0}".format(str(FLAGS.from_step))))
+            saver.restore(sess, os.path.join(FLAGS.chkpnt_dir, "fcnet-{0}".format(str(FLAGS.from_step))))
 
         # Firstly, perform validation on valid_data
         if FLAGS.verbose:
