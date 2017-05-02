@@ -50,9 +50,6 @@ def _compute(valid_dat, test_dat):
     graph = tf.Graph()
     with graph.as_default():
 
-        # Start a session
-        sess = tf.Session(graph=graph)
-
         _log("initializing the model")
 
         # Place holders
@@ -64,6 +61,9 @@ def _compute(valid_dat, test_dat):
         infer_op = _get_infer_op(forward_op)
         reg_op = tf.add_n(tf.losses.get_regularization_losses())
         loss_op = _get_loss_op(forward_op, labels) + reg_op
+
+        # Start a session
+        sess = tf.Session(graph=graph)
 
         sess.run(tf.global_variables_initializer())
 
