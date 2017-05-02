@@ -70,9 +70,6 @@ def _train(
         # Update step
         step = FLAGS.from_step + 1
 
-        # Start a session
-        sess = tf.Session(graph=graph)
-
         _log("initializing the model")
 
         # ???
@@ -95,6 +92,9 @@ def _train(
         loss_op = _get_loss_op(forward_op, labels) + reg_op
         train_op = _get_train_op(loss_op, learning_rate, global_step)
         infer_op = _get_infer_op(forward_op)
+
+        # Start a session
+        sess = tf.Session(graph=graph)
 
         saver = tf.train.Saver()
 
