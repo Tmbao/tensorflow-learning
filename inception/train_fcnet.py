@@ -85,7 +85,7 @@ def _train(
             global_step,
             decay_steps,
             FLAGS.lr_decay)
-        forward_op = FCNet(dims=[2048, 2048, 100], graph=graph, beta=FLAGS.beta).forward(inputs)
+        forward_op = FCNet(dims=[2048, 2048, 100], beta=FLAGS.beta).forward(inputs)
         reg_op = tf.add_n(tf.losses.get_regularization_losses())
         loss_op = _get_loss_op(forward_op, labels) + reg_op
         train_op = _get_train_op(loss_op, learning_rate, global_step)
@@ -99,7 +99,7 @@ def _train(
         sess.run(tf.global_variables_initializer())
         if FLAGS.from_step >= 0:
             _log("restoring the model")
-            saver.restore(sess, os.path.join(FLAGS.chkpnt_dir, str(FLAGS.from_step)))
+            saver.restore(sess, os.path.join(FLAGS.chkpnt_dir, "fcnet-{}".format(str(FLAGS.from_step))))
 
         for epoch in range(FLAGS.no_epochs):
             _log("{} epoch = {}".format(datetime.datetime.now(), epoch))
@@ -125,7 +125,7 @@ def _train(
                 # Save the current model
                 if step % FLAGS.save_period == 0:
                     _log("-SAVE- start")
-                    saver.save(sess, os.path.join(FLAGS.chkpnt_dir, str(step)), global_step=step)
+                    saver.save(sess, os.path.join(FLAGS.chkpnt_dir, "fcnet"), global_step=step)
                     _log("-SAVE- done")
 
                 # Perform validation
