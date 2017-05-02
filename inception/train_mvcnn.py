@@ -87,7 +87,7 @@ def _train(
             global_step,
             decay_steps,
             FLAGS.lr_decay)
-        forward_op = MVCNNet(graph=graph, beta=FLAGS.beta, no_views=FLAGS.no_views).forward(inputs)
+        forward_op = MVCNNet(beta=FLAGS.beta, no_views=FLAGS.no_views).forward(inputs)
         reg_op = tf.add_n(tf.losses.get_regularization_losses())
         loss_op = _get_loss_op(forward_op, labels) + reg_op
         train_op = _get_train_op(loss_op, learning_rate, global_step)
