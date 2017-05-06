@@ -134,14 +134,14 @@ def _train(
                     # Run the model on test data after saving
                     labels = []
                     paths = []
-                    for val_inputs, _, val_paths in test_dat.batches(FLAGS.batch_size):
+                    for tst_inputs, _, tst_paths in test_dat.batches(FLAGS.batch_size):
                         # Create food
-                        food = {inputs: np.squeeze(val_inputs), "keep_prob:0": 1}
+                        food = {inputs: np.squeeze(tst_inputs), "keep_prob:0": 1}
 
                         infer_val = sess.run(infer_op, feed_dict=food)
 
                         labels = np.concatenate([labels, infer_val])
-                        paths = np.concatenate([paths, val_paths])
+                        paths = np.concatenate([paths, tst_paths])
 
                     groups = [[] for _ in range(100)]
                     for idx in range(test_dat.size()):
