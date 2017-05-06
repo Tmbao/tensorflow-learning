@@ -130,7 +130,7 @@ def _train(
                     _log("-SAVE- done")
 
                     # Run the model on test data after saving
-                    labels = []
+                    infer_labels = []
                     paths = []
                     for tst_inputs, _, tst_paths in test_dat.batches(FLAGS.batch_size):
                         # Create food
@@ -138,18 +138,17 @@ def _train(
 
                         infer_val = sess.run(infer_op, feed_dict=food)
 
-                        labels = np.concatenate([labels, infer_val])
+                        infer_labels = np.concatenate([infer_labels, infer_val])
                         paths = np.concatenate([paths, tst_paths])
 
                     groups = [[] for _ in range(100)]
                     for idx in range(test_dat.size()):
-                        groups[int(labels[idx])].append(os.path.basename(paths[idx]))
+                        groups[int(infer_labels[idx])].append(os.path.basename(paths[idx]))
 
-                    
                     for idx in range(test_dat.size()):
                         ranklist_path = os.path.join(FLAGS.ranklist_dir, os.path.basename(paths[idx]))
                         with open(ranklist_path, "w") as frl:
-                            frl.write("\n".join(groups[int(labels[idx])]))
+                            frl.write("\n".join(groups[int(infer_labels[idx])]))
                         _log("Wrote to {}.".format(ranklist_path))
 
                 # Perform validation
