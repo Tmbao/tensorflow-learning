@@ -109,10 +109,8 @@ def _train(
             train_dat.shuffle()
 
             for trn_inputs, trn_labels, _ in train_dat.batches(FLAGS.batch_size):
-                trn_inputs = np.squeeze(trn_inputs)
-
                 # Create food
-                food = {labels: trn_labels, inputs: trn_inputs, "keep_prob:0": 0.5}
+                food = {labels: trn_labels, inputs: np.squeeze(trn_inputs), "keep_prob:0": 0.5}
 
                 # Feed the model
                 _, _, loss_val = sess.run([train_op, infer_op, loss_op],
