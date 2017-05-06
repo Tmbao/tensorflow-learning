@@ -22,6 +22,8 @@ tf.app.flags.DEFINE_string("chkpnt_dir", "{}/chkpnts".format(DEFAULT_DIR),
                            "Checkpoint directory")
 tf.app.flags.DEFINE_string("summ_dir", "{}/summary".format(DEFAULT_DIR),
                            "Summary directory")
+tf.app.flags.DEFINE_string("ranklist_dir", "{}/ranklist".format(DEFAULT_DIR),
+                           "Ranklist directory")
 tf.app.flags.DEFINE_integer("from_step", -1,
                             "Continue training from a checkpoint")
 tf.app.flags.DEFINE_integer("batch_size", 8, "Batch size")
@@ -57,6 +59,7 @@ def _get_infer_op(logits):
 def _train(
         train_dat,
         valid_dat,
+        test_dat,
         summ):
 
     train_size = train_dat.size()
@@ -128,6 +131,29 @@ def _train(
                     saver.save(sess, os.path.join(FLAGS.chkpnt_dir, "fcnet"), global_step=step)
                     _log("-SAVE- done")
 
+                    # Run the model on test data after saving
+                    labels = []
+                    paths = []
+                    for val_inputs, _, val_paths in test_dat.batches(FLAGS.batch_size):
+                        # Create food
+                        food = {inputs: np.squeeze(val_inputs), "keep_prob:0": 1}
+
+                        infer_val = sess.run(infer_op, feed_dict=food)
+
+                        labels = np.concatenate([labels, infer_val])
+                        paths = np.concatenate([paths, val_paths])
+
+                    groups = [[] for _ in range(100)]
+                    for idx in range(test_dat.size()):
+                        groups[int(labels[idx])].append(os.path.basename(paths[idx]))
+
+                    
+                    for idx in range(test_dat.size()):
+                        ranklist_path = os.path.join(FLAGS.ranklist_dir, os.path.basename(paths[idx]))
+                        with open(ranklist_path, "w") as frl:
+                            frl.write("\n".join(groups[int(labels[idx])]))
+                        _log("Wrote to {}.".format(ranklist_path))
+
                 # Perform validation
                 if step > 0 and step % FLAGS.val_period == 0:
                     _log("-VALID- {} start".format(datetime.datetime.now()))
@@ -169,6 +195,8 @@ def main():
     train_dat = Data(FLAGS.data_dir, "train", 1,
                      no_categories=100, suffix=".inceptionv3.pool.npy")
     valid_dat = Data(FLAGS.data_dir, "valid", 1,
+                     no_categories=100, suffix=".inceptionv3.pool.npy")
+    test_dat = Data(FLAGS.data_dir, "test", 1, is_test=True,
                      no_categories=100, suffix=".inceptionv3.pool.npy")
     summ = ScalarSummarizer(FLAGS.summ_dir, {
         "training_loss": "float32",
