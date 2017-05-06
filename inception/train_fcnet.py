@@ -206,6 +206,7 @@ def main():
     _train(
         train_dat,
         valid_dat,
+        test_dat,
         summ)
 
 
