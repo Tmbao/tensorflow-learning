@@ -124,31 +124,26 @@ def _train(
                          .format(datetime.datetime.now(), step, loss_val))
 
                 # Save the current model
-                if step % FLAGS.save_period == 0:
+                if step > 0 && step % FLAGS.save_period == 0:
                     _log("-SAVE- start")
                     saver.save(sess, os.path.join(FLAGS.chkpnt_dir, "fcnet"), global_step=step)
                     _log("-SAVE- done")
 
                     # Run the model on test data after saving
-                    infer_labels = []
+                    likelyhoods = []
                     paths = []
                     for tst_inputs, _, tst_paths in test_dat.batches(FLAGS.batch_size):
                         # Create food
                         food = {inputs: np.squeeze(tst_inputs), "keep_prob:0": 1}
 
-                        infer_val = sess.run(infer_op, feed_dict=food)
+                        forward_val = sess.run(forward_op, feed_dict=food)
 
-                        infer_labels = np.concatenate([infer_labels, infer_val])
+                        likelyhoods = np.concatenate([likelyhoods, forward_val])
                         paths = np.concatenate([paths, tst_paths])
-
-                    groups = [[] for _ in range(100)]
-                    for idx in range(test_dat.size()):
-                        groups[int(infer_labels[idx])].append(os.path.basename(paths[idx]))
 
                     for idx in range(test_dat.size()):
                         ranklist_path = os.path.join(FLAGS.ranklist_dir, os.path.basename(paths[idx]))
-                        with open(ranklist_path, "w") as frl:
-                            frl.write("\n".join(groups[int(infer_labels[idx])]))
+                        np.save(ranklist_path, likelyhoods[idx])
                         _log("Wrote to {}.".format(ranklist_path))
 
                 # Perform validation
