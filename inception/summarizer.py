@@ -7,8 +7,7 @@ import tensorflow as tf
 class ScalarSummarizer:
     def __init__(self, summary_dir, sess, tensors):
         self._sess = sess
-        self._writer = tf.summary.FileWriter(
-            summary_dir, graph=self._graph)
+        self._writer = tf.summary.FileWriter(summary_dir)
         self._summary_tensors = {}
         for tensor_name, tensor_type in tensors.items():
             self._summary_tensors[tensor_name] = tf.summary.scalar(
