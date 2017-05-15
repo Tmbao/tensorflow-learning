@@ -59,8 +59,7 @@ def _get_infer_op(logits):
 def _train(
         train_dat,
         valid_dat,
-        test_dat,
-        summ):
+        test_dat):
 
     train_size = train_dat.size()
     _log("training size = {}".format(train_size))
@@ -96,6 +95,12 @@ def _train(
         
         # Start a session
         sess = tf.Session(graph=graph)
+
+        summ = ScalarSummarizer(FLAGS.summ_dir, sess, {
+            "training_loss": "float32",
+            "validation_loss": "float32",
+            "validation_acc": "float32"
+        })
 
         saver = tf.train.Saver(tf.global_variables())
 
@@ -192,16 +197,10 @@ def main():
                      no_categories=100, suffix=".inceptionv3.pool.npy")
     test_dat = Data(FLAGS.data_dir, "test", 1, is_test=True,
                      no_categories=100, suffix=".inceptionv3.pool.npy")
-    summ = ScalarSummarizer(FLAGS.summ_dir, {
-        "training_loss": "float32",
-        "validation_loss": "float32",
-        "validation_acc": "float32"
-    })
     _train(
         train_dat,
         valid_dat,
-        test_dat,
-        summ)
+        test_dat)
 
 
 if __name__ == "__main__":
