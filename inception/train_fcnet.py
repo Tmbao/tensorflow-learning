@@ -130,7 +130,7 @@ def _train(
                     _log("-SAVE- done")
 
                     # Run the model on test data after saving
-                    likelyhoods = []
+                    likelyhoods = None
                     paths = []
                     for tst_inputs, _, tst_paths in test_dat.batches(FLAGS.batch_size):
                         # Create food
@@ -138,7 +138,10 @@ def _train(
 
                         forward_val = sess.run(forward_op, feed_dict=food)
 
-                        likelyhoods = np.concatenate([likelyhoods, forward_val])
+                        if likelyhoods == None:
+                            likelyhoods = forward_val
+                        else:
+                            likelyhoods = np.concatenate([likelyhoods, forward_val])
                         paths = np.concatenate([paths, tst_paths])
 
                     for idx in range(test_dat.size()):
