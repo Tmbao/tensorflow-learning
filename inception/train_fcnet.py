@@ -124,7 +124,7 @@ def _train(
                          .format(datetime.datetime.now(), step, loss_val))
 
                 # Save the current model
-                if step > 0 && step % FLAGS.save_period == 0:
+                if step > 0 and step % FLAGS.save_period == 0:
                     _log("-SAVE- start")
                     saver.save(sess, os.path.join(FLAGS.chkpnt_dir, "fcnet"), global_step=step)
                     _log("-SAVE- done")
@@ -154,7 +154,6 @@ def _train(
                     predictions = []
                     losses = []
                     for val_inputs, val_labels, _ in valid_dat.batches(FLAGS.batch_size):
-
                         # Create food
                         food = {labels: val_labels, inputs: np.squeeze(val_inputs), "keep_prob:0": 1}
 
