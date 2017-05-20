@@ -112,13 +112,13 @@ class Data:
             no_examples = min(no_examples, self._size)
 
         for start in range(0, no_examples, batch_size):
-            yield _load_image(self._origin_objects[start: min(no_examples, start +
-                                                              batch_size)]),
-                self._origin_catetories[start: min(
-                    no_examples, start + batch_size)],
-                _load_image(self._objects[start: min(no_examples, start +
-                                                     batch_size)]),
-                self.catetories[start: min(no_examples, start + batch_size)]
+            yield (_load_image(self._origin_objects[start: min(no_examples, start +
+                                                               batch_size)]),
+                   self._origin_catetories[start: min(
+                       no_examples, start + batch_size)],
+                   _load_image(self._objects[start: min(no_examples, start +
+                                                        batch_size)]),
+                   self.catetories[start: min(no_examples, start + batch_size)])
 
     def _get_all_files(self, path, suffix):
         return np.array(sorted([os.path.join(path, name)
