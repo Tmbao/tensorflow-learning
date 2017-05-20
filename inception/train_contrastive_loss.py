@@ -8,7 +8,7 @@ import os
 import numpy as np
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
-from tensorflow.contrib.slim.nets.inception_v3 import inception_v3
+from tensorflow.contrib.slim.python.slim.nets.inception_v3 import inception_v3
 
 from data_shapenet_contrastive import Data
 from contrastive_loss import contrastive_loss
