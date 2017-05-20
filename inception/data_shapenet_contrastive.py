@@ -77,7 +77,7 @@ class Data:
                 logits = [0.0] * self._no_categories
                 logits[self._label2id[int(category)]] = 1.0
                 self._categories += [logits for _ in files]
-            self._objects += files
+            self._objects = np.concatenate([self._objects, files])
         self._categories = np.array(self._categories)
 
     def size(self):
