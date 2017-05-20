@@ -44,12 +44,14 @@ def _log(message):
 
 
 def _get_loss_op(logits, labels):
-    losses = tf.nn.softmax_cross_entropy_with_logits(labels=labels, logits=logits)
+    losses = tf.nn.softmax_cross_entropy_with_logits(
+        labels=labels, logits=logits)
     return tf.reduce_mean(losses)
 
 
 def _get_train_op(loss_op, learning_rate, global_step):
-    return tf.train.AdamOptimizer(learning_rate).minimize(loss_op, global_step=global_step)
+    return tf.train.AdamOptimizer(learning_rate).minimize(
+        loss_op, global_step=global_step)
 
 
 def _get_infer_op(logits):
@@ -87,12 +89,17 @@ def _train(
             global_step,
             decay_steps,
             FLAGS.lr_decay)
-        forward_op = FCNet(dims=[2048, 2048, 100], beta=FLAGS.beta).forward(inputs)
+        forward_op = FCNet(
+            dims=[
+                2048,
+                2048,
+                100],
+            beta=FLAGS.beta).forward(inputs)
         reg_op = tf.add_n(tf.losses.get_regularization_losses())
         loss_op = _get_loss_op(forward_op, labels) + reg_op
         train_op = _get_train_op(loss_op, learning_rate, global_step)
         infer_op = _get_infer_op(forward_op)
-        
+
         # Start a session
         sess = tf.Session(graph=graph)
 
@@ -107,15 +114,20 @@ def _train(
         sess.run(tf.global_variables_initializer())
         if FLAGS.from_step >= 0:
             _log("restoring the model")
-            saver.restore(sess, os.path.join(FLAGS.chkpnt_dir, "fcnet-{}".format(str(FLAGS.from_step))))
+            saver.restore(sess, os.path.join(FLAGS.chkpnt_dir,
+                                             "fcnet-{}".format(str(FLAGS.from_step))))
 
         for epoch in range(FLAGS.no_epochs):
             _log("{} epoch = {}".format(datetime.datetime.now(), epoch))
             train_dat.shuffle()
 
-            for trn_inputs, trn_labels, _ in train_dat.batches(FLAGS.batch_size):
+            for trn_inputs, trn_labels, _ in train_dat.batches(
+                    FLAGS.batch_size):
                 # Create food
-                food = {labels: trn_labels, inputs: np.squeeze(trn_inputs), "keep_prob:0": 0.5}
+                food = {
+                    labels: trn_labels,
+                    inputs: np.squeeze(trn_inputs),
+                    "keep_prob:0": 0.5}
 
                 # Feed the model
                 _, _, loss_val = sess.run([train_op, infer_op, loss_op],
@@ -131,26 +143,36 @@ def _train(
                 # Save the current model
                 if step > 0 and step % FLAGS.save_period == 0:
                     _log("-SAVE- start")
-                    saver.save(sess, os.path.join(FLAGS.chkpnt_dir, "fcnet"), global_step=step)
+                    saver.save(
+                        sess,
+                        os.path.join(
+                            FLAGS.chkpnt_dir,
+                            "fcnet"),
+                        global_step=step)
                     _log("-SAVE- done")
 
                     # Run the model on test data after saving
                     likelyhoods = None
                     paths = []
-                    for tst_inputs, _, tst_paths in test_dat.batches(FLAGS.batch_size):
+                    for tst_inputs, _, tst_paths in test_dat.batches(
+                            FLAGS.batch_size):
                         # Create food
-                        food = {inputs: np.squeeze(tst_inputs), "keep_prob:0": 1}
+                        food = {
+                            inputs: np.squeeze(tst_inputs),
+                            "keep_prob:0": 1}
 
                         forward_val = sess.run(forward_op, feed_dict=food)
 
-                        if likelyhoods == None:
+                        if likelyhoods is None:
                             likelyhoods = forward_val
                         else:
-                            likelyhoods = np.concatenate([likelyhoods, forward_val])
+                            likelyhoods = np.concatenate(
+                                [likelyhoods, forward_val])
                         paths = np.concatenate([paths, tst_paths])
 
                     for idx in range(test_dat.size()):
-                        ranklist_path = os.path.join(FLAGS.ranklist_dir, os.path.basename(paths[idx]))
+                        ranklist_path = os.path.join(
+                            FLAGS.ranklist_dir, os.path.basename(paths[idx]))
                         np.save(ranklist_path, likelyhoods[idx])
                         _log("Wrote to {}.".format(ranklist_path))
 
@@ -161,9 +183,13 @@ def _train(
                     ground_truth = []
                     predictions = []
                     losses = []
-                    for val_inputs, val_labels, _ in valid_dat.batches(FLAGS.batch_size):
+                    for val_inputs, val_labels, _ in valid_dat.batches(
+                            FLAGS.batch_size):
                         # Create food
-                        food = {labels: val_labels, inputs: np.squeeze(val_inputs), "keep_prob:0": 1}
+                        food = {
+                            labels: val_labels,
+                            inputs: np.squeeze(val_inputs),
+                            "keep_prob:0": 1}
 
                         infer_val, loss_val, = sess.run(
                             [infer_op, loss_op], feed_dict=food)
@@ -177,7 +203,7 @@ def _train(
                     val_loss = np.mean(np.array(losses))
 
                     _log("-VALID- {} done: loss={:.4}, acc={:.4}"
-                        .format(datetime.datetime.now(), val_loss, val_acc))
+                         .format(datetime.datetime.now(), val_loss, val_acc))
 
                     summ.log({
                         "validation_loss": val_loss,
@@ -187,7 +213,12 @@ def _train(
                 step += 1
 
         # Save at the last step
-        saver.save(sess, os.path.join(FLAGS.chkpnt_dir, str(step)), global_step=step)
+        saver.save(
+            sess,
+            os.path.join(
+                FLAGS.chkpnt_dir,
+                str(step)),
+            global_step=step)
 
 
 def main():
@@ -196,7 +227,7 @@ def main():
     valid_dat = Data(FLAGS.data_dir, "valid", 1,
                      no_categories=100, suffix=".inceptionv3.pool.npy")
     test_dat = Data(FLAGS.data_dir, "test", 1, is_test=True,
-                     no_categories=100, suffix=".inceptionv3.pool.npy")
+                    no_categories=100, suffix=".inceptionv3.pool.npy")
     _train(
         train_dat,
         valid_dat,

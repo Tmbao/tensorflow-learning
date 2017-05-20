@@ -17,7 +17,13 @@ class Data:
     Data provider for tensorflow.
     """
 
-    def __init__(self, prefix, tag, no_views=26, no_categories=1000, suffix=""):
+    def __init__(
+            self,
+            prefix,
+            tag,
+            no_views=26,
+            no_categories=1000,
+            suffix=""):
         """
         Construct a data provider object.
 

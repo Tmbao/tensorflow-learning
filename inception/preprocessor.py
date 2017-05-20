@@ -18,15 +18,25 @@ FLAGS = tf.app.flags.FLAGS
 tf.app.flags.DEFINE_string("data_dir", "{}/data".format(DEFAULT_DIR),
                            "Data directory")
 tf.app.flags.DEFINE_integer("no_views", 26, "Number of views")
-tf.app.flags.DEFINE_string("model", "inceptionv3", "Model name [inceptionv3, vgg16]")
-tf.app.flags.DEFINE_string("summarizer", "pool", "Summarization method [pool, concat]")
-tf.app.flags.DEFINE_boolean("overwrite", False, "Should the program overwrite existing files?")
+tf.app.flags.DEFINE_string(
+    "model",
+    "inceptionv3",
+    "Model name [inceptionv3, vgg16]")
+tf.app.flags.DEFINE_string(
+    "summarizer",
+    "pool",
+    "Summarization method [pool, concat]")
+tf.app.flags.DEFINE_boolean(
+    "overwrite",
+    False,
+    "Should the program overwrite existing files?")
 tf.app.flags.DEFINE_boolean("verbose", False, "Verbose mode")
 
 
 def _log(message):
     if FLAGS.verbose:
         print(message)
+
 
 def _get_model():
     if FLAGS.model == "inceptionv3":
@@ -44,7 +54,9 @@ def _summarize(inputs):
     elif FLAGS.summarizer == "concat":
         return np.concatenate(inputs, axis=1)
     else:
-        raise ValueError("Summarizer {} is not supported".format(FLAGS.summarizer))
+        raise ValueError(
+            "Summarizer {} is not supported".format(
+                FLAGS.summarizer))
 
 
 def _train(
@@ -65,8 +77,20 @@ def _train(
         outputs = _summarize(outputs)
 
         for index, path in enumerate(b_paths):
-            np.save(os.path.join(path, "data.{}.{}".format(FLAGS.model, FLAGS.summarizer)), outputs[index])
-            _log("saved {}".format(os.path.join(path, "data.{}.{}".format(FLAGS.model, FLAGS.summarizer))))
+            np.save(
+                os.path.join(
+                    path,
+                    "data.{}.{}".format(
+                        FLAGS.model,
+                        FLAGS.summarizer)),
+                outputs[index])
+            _log(
+                "saved {}".format(
+                    os.path.join(
+                        path,
+                        "data.{}.{}".format(
+                            FLAGS.model,
+                            FLAGS.summarizer))))
 
     for b_inputs, _, b_paths in valid_dat.batches(1):
         outputs = [cnn.classify(b_input) for b_input in b_inputs]
@@ -74,8 +98,20 @@ def _train(
         outputs = _summarize(outputs)
 
         for index, path in enumerate(b_paths):
-            np.save(os.path.join(path, "data.{}.{}".format(FLAGS.model, FLAGS.summarizer)), outputs[index])
-            _log("saved {}".format(os.path.join(path, "data.{}.{}".format(FLAGS.model, FLAGS.summarizer))))
+            np.save(
+                os.path.join(
+                    path,
+                    "data.{}.{}".format(
+                        FLAGS.model,
+                        FLAGS.summarizer)),
+                outputs[index])
+            _log(
+                "saved {}".format(
+                    os.path.join(
+                        path,
+                        "data.{}.{}".format(
+                            FLAGS.model,
+                            FLAGS.summarizer))))
 
     for b_inputs, _, b_paths in test_dat.batches(1):
         outputs = [cnn.classify(b_input) for b_input in b_inputs]
@@ -83,13 +119,30 @@ def _train(
         outputs = _summarize(outputs)
 
         for index, path in enumerate(b_paths):
-            np.save(os.path.join(path, "data.{}.{}".format(FLAGS.model, FLAGS.summarizer)), outputs[index])
-            _log("saved {}".format(os.path.join(path, "data.{}.{}".format(FLAGS.model, FLAGS.summarizer))))
+            np.save(
+                os.path.join(
+                    path,
+                    "data.{}.{}".format(
+                        FLAGS.model,
+                        FLAGS.summarizer)),
+                outputs[index])
+            _log(
+                "saved {}".format(
+                    os.path.join(
+                        path,
+                        "data.{}.{}".format(
+                            FLAGS.model,
+                            FLAGS.summarizer))))
 
 
 def _filter_fn(prefix):
     if not FLAGS.overwrite:
-        return not os.path.isfile(os.path.join(prefix, "data.{}.{}.npy".format(FLAGS.model, FLAGS.summarizer)))
+        return not os.path.isfile(
+            os.path.join(
+                prefix,
+                "data.{}.{}.npy".format(
+                    FLAGS.model,
+                    FLAGS.summarizer)))
     else:
         return True
 

@@ -43,12 +43,14 @@ def _log(message):
 
 
 def _get_loss_op(logits, labels):
-    losses = tf.nn.softmax_cross_entropy_with_logits(labels=labels, logits=logits)
+    losses = tf.nn.softmax_cross_entropy_with_logits(
+        labels=labels, logits=logits)
     return tf.reduce_mean(losses)
 
 
 def _get_train_op(loss_op, learning_rate, global_step):
-    return tf.train.AdamOptimizer(learning_rate).minimize(loss_op, global_step=global_step)
+    return tf.train.AdamOptimizer(learning_rate).minimize(
+        loss_op, global_step=global_step)
 
 
 def _get_infer_op(logits):
@@ -76,8 +78,16 @@ def _train(
         decay_steps = train_size / FLAGS.batch_size * FLAGS.no_epochs_decay
 
         # Place holders
-        inputs = [tf.placeholder("float32", shape=(None, 299, 299, 3), name="i{}".format(i))
-                  for i in range(FLAGS.no_views)]
+        inputs = [
+            tf.placeholder(
+                "float32",
+                shape=(
+                    None,
+                    299,
+                    299,
+                    3),
+                name="i{}".format(i)) for i in range(
+                FLAGS.no_views)]
         labels = tf.placeholder("float32", shape=(None, 100))
 
         # Tensors
@@ -87,7 +97,8 @@ def _train(
             global_step,
             decay_steps,
             FLAGS.lr_decay)
-        forward_op = MVCNNet(beta=FLAGS.beta, no_views=FLAGS.no_views).forward(inputs)
+        forward_op = MVCNNet(beta=FLAGS.beta,
+                             no_views=FLAGS.no_views).forward(inputs)
         reg_op = tf.add_n(tf.losses.get_regularization_losses())
         loss_op = _get_loss_op(forward_op, labels) + reg_op
         train_op = _get_train_op(loss_op, learning_rate, global_step)
@@ -107,11 +118,15 @@ def _train(
             _log("{} epoch = {}".format(datetime.datetime.now(), epoch))
             train_dat.shuffle()
 
-            for trn_inputs, trn_labels, _ in train_dat.batches(FLAGS.batch_size):
+            for trn_inputs, trn_labels, _ in train_dat.batches(
+                    FLAGS.batch_size):
                 trn_inputs = np.squeeze(trn_inputs)
 
                 # Create food
-                food = {labels: trn_labels, inputs: trn_inputs, "keep_prob:0": 0.5}
+                food = {
+                    labels: trn_labels,
+                    inputs: trn_inputs,
+                    "keep_prob:0": 0.5}
 
                 # Feed the model
                 _, _, loss_val = sess.run([train_op, infer_op, loss_op],
@@ -127,7 +142,12 @@ def _train(
                 # Save the current model
                 if step % FLAGS.save_period == 0:
                     _log("-SAVE- start")
-                    saver.save(sess, os.path.join(FLAGS.chkpnt_dir, str(step)), global_step=step)
+                    saver.save(
+                        sess,
+                        os.path.join(
+                            FLAGS.chkpnt_dir,
+                            str(step)),
+                        global_step=step)
                     _log("-SAVE- done")
 
                 # Perform validation
@@ -137,10 +157,14 @@ def _train(
                     ground_truth = []
                     predictions = []
                     losses = []
-                    for val_inputs, val_labels, _ in valid_dat.batches(FLAGS.batch_size):
+                    for val_inputs, val_labels, _ in valid_dat.batches(
+                            FLAGS.batch_size):
 
                         # Create food
-                        food = {labels: val_labels, inputs: np.squeeze(val_inputs), "keep_prob:0": 1}
+                        food = {
+                            labels: val_labels,
+                            inputs: np.squeeze(val_inputs),
+                            "keep_prob:0": 1}
 
                         infer_val, loss_val, = sess.run(
                             [infer_op, loss_op], feed_dict=food)
@@ -154,7 +178,7 @@ def _train(
                     val_loss = np.mean(np.array(losses))
 
                     _log("-VALID- {} done: loss={:.4}, acc={:.4}"
-                        .format(datetime.datetime.now(), val_loss, val_acc))
+                         .format(datetime.datetime.now(), val_loss, val_acc))
 
                     summ.log({
                         "validation_loss": val_loss,
@@ -164,7 +188,12 @@ def _train(
                 step += 1
 
         # Save at the last step
-        saver.save(sess, os.path.join(FLAGS.chkpnt_dir, str(step)), global_step=step)
+        saver.save(
+            sess,
+            os.path.join(
+                FLAGS.chkpnt_dir,
+                str(step)),
+            global_step=step)
 
 
 def main():

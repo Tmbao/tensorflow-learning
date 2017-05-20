@@ -18,7 +18,14 @@ class Data:
     Data provider for tensorflow.
     """
 
-    def __init__(self, prefix, tag, no_categories=1000, suffix="", is_test=False, filter_fn=None):
+    def __init__(
+            self,
+            prefix,
+            tag,
+            no_categories=1000,
+            suffix="",
+            is_test=False,
+            filter_fn=None):
         """
         Construct a data provider object.
 
@@ -41,14 +48,16 @@ class Data:
                 firstln = True
                 for row in reader:
                     if firstln:
-                         firstln = False
-                         continue
+                        firstln = False
+                        continue
                     label2cate[row[0]] = row[1]
-            
-            return {int(key): cate2id[int(value)] for key, value in label2cate.items()}
 
-        self._objects = self._get_all_files(os.path.join(prefix, tag), suffix="")
-        if filter_fn != None:
+            return {int(key): cate2id[int(value)]
+                    for key, value in label2cate.items()}
+
+        self._objects = self._get_all_files(
+            os.path.join(prefix, tag), suffix="")
+        if filter_fn is not None:
             self._objects = list(filter(filter_fn, self._objects))
 
         self._is_test = is_test
@@ -57,7 +66,7 @@ class Data:
 
         self._no_categories = no_categories
         self._size = len(self._objects)
-        
+
         paths = self._objects
         self._objects = []
         self._categories = []
@@ -69,7 +78,6 @@ class Data:
                 self._categories += [category for _ in files]
             self._objects += files
         self._categories = np.array(self._categories)
-
 
     def size(self):
         """
@@ -106,10 +114,11 @@ class Data:
         for start in range(0, no_examples, batch_size):
             yield _load_image(self._origin_objects[start: min(no_examples, start +
                                                               batch_size)]),
-                  self._origin_catetories[start: min(no_examples, start + batch_size)],
-                  _load_image(self._objects[start: min(no_examples, start +
-                                                       batch_size)]),
-                  self.catetories[start: min(no_examples, start + batch_size)]
+                self._origin_catetories[start: min(
+                    no_examples, start + batch_size)],
+                _load_image(self._objects[start: min(no_examples, start +
+                                                     batch_size)]),
+                self.catetories[start: min(no_examples, start + batch_size)]
 
     def _get_all_files(self, path, suffix):
         return np.array(sorted([os.path.join(path, name)

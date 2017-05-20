@@ -48,5 +48,5 @@ class InceptionV3:
         self._session = tf.Session(graph=self._graph)
 
     def classify(self, inputs):
-        return np.concatenate([self._session.run(self._outputs, feed_dict={self._input: input})
-                               for input in inputs])
+        return np.concatenate([self._session.run(self._outputs, feed_dict={
+                              self._input: input}) for input in inputs])

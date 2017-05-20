@@ -18,7 +18,15 @@ class Data:
     Data provider for tensorflow.
     """
 
-    def __init__(self, prefix, tag, no_views=26, no_categories=1000, suffix="", is_test=False, filter_fn=None):
+    def __init__(
+            self,
+            prefix,
+            tag,
+            no_views=26,
+            no_categories=1000,
+            suffix="",
+            is_test=False,
+            filter_fn=None):
         """
         Construct a data provider object.
 
@@ -41,14 +49,16 @@ class Data:
                 firstln = True
                 for row in reader:
                     if firstln:
-                         firstln = False
-                         continue
+                        firstln = False
+                        continue
                     label2cate[row[0]] = row[1]
-            
-            return {int(key): cate2id[int(value)] for key, value in label2cate.items()}
 
-        self._objects = self._get_all_files(os.path.join(prefix, tag), suffix="")
-        if filter_fn != None:
+            return {int(key): cate2id[int(value)]
+                    for key, value in label2cate.items()}
+
+        self._objects = self._get_all_files(
+            os.path.join(prefix, tag), suffix="")
+        if filter_fn is not None:
             self._objects = list(filter(filter_fn, self._objects))
 
         self._is_test = is_test

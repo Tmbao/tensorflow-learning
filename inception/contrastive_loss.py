@@ -24,10 +24,12 @@ def contrastive_loss(margin, threshold=1e-5):
 
             minus = margin - d
             right_diff = minus / (d + threshold)
-            right_diff = d_ * tf.reshape(right_diff * tf.to_float(tf.greater(minus, 0)), [-1, 1])
+            right_diff = d_ * \
+                tf.reshape(right_diff * tf.to_float(tf.greater(minus, 0)), [-1, 1])
 
             batch_size = tf.to_float(tf.slice(tf.shape(data1), [0], [1]))
-            data1_diff = diff * ((d_ + right_diff) * tf.reshape(similarity, [-1, 1]) - right_diff) / batch_size
+            data1_diff = diff * \
+                ((d_ + right_diff) * tf.reshape(similarity, [-1, 1]) - right_diff) / batch_size
             data2_diff = -data1_diff
             return data1_diff, data2_diff, tf.zeros_like(similarity)
 

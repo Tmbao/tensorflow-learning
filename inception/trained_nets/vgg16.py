@@ -20,15 +20,17 @@ class Vgg16:
         """
         Initialize the pretrained model.
         """
-        self._data_dict = np.load(os.path.join(net_dir, graph_def_file), encoding='latin1').item()
+        self._data_dict = np.load(
+            os.path.join(
+                net_dir,
+                graph_def_file),
+            encoding='latin1').item()
         self._build()
-
 
     def classify(self, inputs):
 
         food = {self._rgb: inputs}
         return self._session.run(self._prob, feed_dict=food)
-        
 
     def _build(self):
 
@@ -36,11 +38,13 @@ class Vgg16:
 
         with self._graph.as_default():
             self._rgb = tf.placeholder(tf.float32, shape=(None, None, None, 3))
-            
-            rgb_scaled = tf.image.resize_images(self._rgb, tf.constant([224, 224], dtype=tf.int32))
+
+            rgb_scaled = tf.image.resize_images(
+                self._rgb, tf.constant([224, 224], dtype=tf.int32))
 
             # Convert RGB to BGR
-            red, green, blue = tf.split(axis=3, num_or_size_splits=3, value=rgb_scaled)
+            red, green, blue = tf.split(
+                axis=3, num_or_size_splits=3, value=rgb_scaled)
             bgr = tf.concat(axis=3, values=[
                 blue - _VGG_MEAN[0],
                 green - _VGG_MEAN[1],
@@ -84,10 +88,16 @@ class Vgg16:
         self._session = tf.Session(graph=self._graph)
 
     def _avg_pool(self, bottom, name):
-        return tf.nn.avg_pool(bottom, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME', name=name)
+        return tf.nn.avg_pool(
+            bottom, ksize=[
+                1, 2, 2, 1], strides=[
+                1, 2, 2, 1], padding='SAME', name=name)
 
     def _max_pool(self, bottom, name):
-        return tf.nn.max_pool(bottom, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME', name=name)
+        return tf.nn.max_pool(
+            bottom, ksize=[
+                1, 2, 2, 1], strides=[
+                1, 2, 2, 1], padding='SAME', name=name)
 
     def _conv_layer(self, bottom, name):
         with tf.variable_scope(name):
