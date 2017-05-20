@@ -74,8 +74,9 @@ class Data:
             files = self._get_all_files(path, suffix=suffix)
             if not self._is_test:
                 category = os.path.basename(path)
+                logits = [0.0] * self._no_categories
                 logits[self._label2id[int(category)]] = 1.0
-                self._categories += [category for _ in files]
+                self._categories += [logits for _ in files]
             self._objects += files
         self._categories = np.array(self._categories)
 
