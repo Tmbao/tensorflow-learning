@@ -109,17 +109,23 @@ class Data:
             else:
                 return np.load(path)
 
+        def _load_images(paths):
+            images = []
+            for path in paths:
+                images.append(_load_image(path))
+            return np.array(images)
+
         if no_examples == -1:
             no_examples = self._size
         else:
             no_examples = min(no_examples, self._size)
 
         for start in range(0, no_examples, batch_size):
-            yield (_load_image(self._origin_objects[start: min(no_examples, start +
+            yield (_load_images(self._origin_objects[start: min(no_examples, start +
                                                                batch_size)]),
                    self._origin_catetories[start: min(
                        no_examples, start + batch_size)],
-                   _load_image(self._objects[start: min(no_examples, start +
+                   _load_images(self._objects[start: min(no_examples, start +
                                                         batch_size)]),
                    self.catetories[start: min(no_examples, start + batch_size)])
 
