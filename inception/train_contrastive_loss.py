@@ -128,64 +128,64 @@ def _train(
             _log("{} epoch = {}".format(datetime.datetime.now(), epoch))
             train_dat.shuffle()
 
-            for tr_left_inputs, tr_left_categories, tr_right_inputs, tr_right_catetories in train_dat.batches(
-                    FLAGS.batch_size):
-                # Create food
-                food = {
-                    left_inputs: tr_left_inputs,
-                    right_inputs: tr_right_inputs,
-                    left_labels: tr_left_categories,
-                    right_labels: tr_right_catetories
-                }
+            for impostor in [True, False]:
+                for tr_left_inputs, tr_left_categories, tr_right_inputs, tr_right_catetories in train_dat.batches(FLAGS.batch_size, impostor=impostor):
+                    # Create food
+                    food = {
+                        left_inputs: tr_left_inputs,
+                        right_inputs: tr_right_inputs,
+                        left_labels: tr_left_categories,
+                        right_labels: tr_right_catetories
+                    }
 
-                # Feed the model
-                loss_val = sess.run(loss_op,
-                                    feed_dict=food)
+                    # Feed the model
+                    loss_val = sess.run(loss_op,
+                                        feed_dict=food)
 
-                summ.log({"training_loss": loss_val}, step)
+                    summ.log({"training_loss": loss_val}, step)
 
-                # Log info
-                if step % FLAGS.log_period == 0:
-                    _log("-TRAIN- {} step={}, loss={:.4}"
-                         .format(datetime.datetime.now(), step, loss_val))
+                    # Log info
+                    if step % FLAGS.log_period == 0:
+                        _log("-TRAIN- {} step={}, loss={:.4}"
+                             .format(datetime.datetime.now(), step, loss_val))
 
-                # Save the current model
-                if step > 0 and step % FLAGS.save_period == 0:
-                    _log("-SAVE- start")
-                    saver.save(
-                        sess,
-                        os.path.join(
-                            FLAGS.chkpnt_dir,
-                            "inception-contrastive-"),
-                        global_step=step)
-                    _log("-SAVE- done")
+                    # Save the current model
+                    if step > 0 and step % FLAGS.save_period == 0:
+                        _log("-SAVE- start")
+                        saver.save(
+                            sess,
+                            os.path.join(
+                                FLAGS.chkpnt_dir,
+                                "inception-contrastive-"),
+                            global_step=step)
+                        _log("-SAVE- done")
 
-                # Perform validation
-                if step > 0 and step % FLAGS.val_period == 0:
-                    _log("-VALID- {} start".format(datetime.datetime.now()))
-                    valid_dat.shuffle()
-                    losses = []
-                    for vl_left_inputs, vl_left_categories, vl_right_inputs, vl_right_categories in valid_dat.batches(
-                            FLAGS.batch_size):
-                        # Create food
-                        food = {
-                            left_inputs: vl_left_inputs,
-                            right_inputs: vl_right_inputs,
-                            left_labels: vl_left_categories,
-                            right_labels: vl_right_categories
-                        }
+                    # Perform validation
+                    if step > 0 and step % FLAGS.val_period == 0:
+                        _log("-VALID- {} start".format(datetime.datetime.now()))
+                        valid_dat.shuffle()
+                        losses = []
+                        for vl_left_inputs, vl_left_categories, vl_right_inputs, vl_right_categories in valid_dat.batches(
+                                FLAGS.batch_size):
+                            # Create food
+                            food = {
+                                left_inputs: vl_left_inputs,
+                                right_inputs: vl_right_inputs,
+                                left_labels: vl_left_categories,
+                                right_labels: vl_right_categories
+                            }
 
-                        loss_val, = sess.run([loss_op], feed_dict=food)
-                        losses.append(loss_val)
+                            loss_val, = sess.run([loss_op], feed_dict=food)
+                            losses.append(loss_val)
 
-                    val_loss = np.mean(np.array(losses))
+                        val_loss = np.mean(np.array(losses))
 
-                    _log("-VALID- {} done: loss={:.4}"
-                         .format(datetime.datetime.now(), val_loss))
+                        _log("-VALID- {} done: loss={:.4}"
+                             .format(datetime.datetime.now(), val_loss))
 
-                    summ.log({"validation_loss": val_loss}, step)
+                        summ.log({"validation_loss": val_loss}, step)
 
-                step += 1
+                    step += 1
 
         # Save at the last step
         saver.save(

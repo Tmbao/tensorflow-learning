@@ -6,6 +6,7 @@ It contains views extracted from cad objects.
 """
 import csv
 import os
+import random
 import re
 
 import numpy as np
@@ -65,7 +66,6 @@ class Data:
             self._label2id = _initialize_labels()
 
         self._no_categories = no_categories
-        self._size = len(self._objects)
 
         paths = self._objects
         self._objects = []
@@ -74,13 +74,16 @@ class Data:
             files = self._get_all_files(path, suffix=suffix)
             if not self._is_test:
                 category = os.path.basename(path)
-                logits = [0.0] * self._no_categories
-                logits[self._label2id[int(category)]] = 1.0
-                self._categories += [logits for _ in files]
+                self._categories += [category for _ in files]
             self._objects.append(files)
-        self._objects = np.concatenate(self._objects)
-        self._categories = np.array(self._categories)
+        self._origin_objects = np.concatenate(self._objects)
+        self._origin_categories = np.array(self._categories)
         self._suffix = suffix
+
+        self._size = len(self._origin_objects)
+        self._groups = [[] for _ in range(self._no_categories)]
+        for idx in range(self._size):
+            self._groups[self._categories[idx]].append(self._origin_objects[idx])
 
     def size(self):
         """
@@ -94,12 +97,10 @@ class Data:
         """
         idx = list(range(self._size))
         np.random.shuffle(idx)
-        self._origin_objects = self._objects
-        self._origin_categories = self._categories
-        self._objects = self._objects[idx]
-        self._categories = self._categories[idx]
+        self._objects = self._origin_objects[idx]
+        self._categories = self._origin_categories[idx]
 
-    def batches(self, batch_size, no_examples=-1):
+    def batches(self, batch_size, no_examples=-1, impostor=True):
         """
         Iterate over examples by batches
         """
@@ -115,19 +116,33 @@ class Data:
                 images.append(_load_image(path))
             return np.array(images)
 
+        def _load_similar_images(categories):
+            similar_images = []
+            for category in categories:
+                group_size = len(self._groups[category])
+                similar_images.append(self._groups[category][random.randint(0, group_size - 1)])
+            return np.array(similar_images)
+
+        def _load_logits(categories):
+            logits = [0.0] * self._no_categories
+            logits[self._label2id[int(category)]] = 1.0
+
         if no_examples == -1:
             no_examples = self._size
         else:
             no_examples = min(no_examples, self._size)
 
         for start in range(0, no_examples, batch_size):
-            yield (_load_images(self._origin_objects[start: min(no_examples, start +
-                                                               batch_size)]),
-                   self._origin_categories[start: min(
-                       no_examples, start + batch_size)],
-                   _load_images(self._objects[start: min(no_examples, start +
-                                                        batch_size)]),
-                   self._categories[start: min(no_examples, start + batch_size)])
+            if impostor:
+                yield (_load_images(self._origin_objects[start: min(no_examples, start + batch_size)]),
+                       _load_logits(self._origin_categories[start: min(no_examples, start + batch_size)]),
+                       _load_similar_images(self._origin_categories[start: min(no_examples, start + batch_size)]),
+                       _load_logits(self._origin_categories[start: min(no_examples, start + batch_size)]))
+            else:
+                yield (_load_images(self._origin_objects[start: min(no_examples, start + batch_size)]),
+                       _load_logits(self._origin_categories[start: min(no_examples, start + batch_size)]),
+                       _load_images(self._objects[start: min(no_examples, start + batch_size)]),
+                       _load_logits(self._categories[start: min(no_examples, start + batch_size)]))
 
     def _get_all_files(self, path, suffix):
         return np.array(sorted([os.path.join(path, name)
