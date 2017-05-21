@@ -80,6 +80,7 @@ class Data:
             self._objects.append(files)
         self._objects = np.concatenate(self._objects)
         self._categories = np.array(self._categories)
+        self._suffix = suffix
 
     def size(self):
         """
