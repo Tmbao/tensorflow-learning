@@ -82,8 +82,8 @@ def _train(
         decay_steps = train_size / FLAGS.batch_size * FLAGS.no_epochs_decay
 
         # Place holders
-        left_inputs = tf.placeholder("float32", shape=(None, 230400))
-        right_inputs = tf.placeholder("float32", shape=(None, 230400))
+        left_inputs = tf.placeholder("float32", shape=(None, 299, 299, 3))
+        right_inputs = tf.placeholder("float32", shape=(None, 299, 299, 3))
         left_labels = tf.placeholder("float32", shape=(None, 100))
         right_labels = tf.placeholder("float32", shape=(None, 100))
 

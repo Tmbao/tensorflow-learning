@@ -77,7 +77,8 @@ class Data:
                 logits = [0.0] * self._no_categories
                 logits[self._label2id[int(category)]] = 1.0
                 self._categories += [logits for _ in files]
-            self._objects = np.concatenate([self._objects, files])
+            self._objects.append(files)
+        self._objects = np.concatenate(self._objects)
         self._categories = np.array(self._categories)
 
     def size(self):
@@ -103,7 +104,7 @@ class Data:
         """
         def _load_image(path):
             if self._suffix.lower() in [".jpg"]:
-                return cv2.imread(path)
+                return cv2.resize(cv2.imread(path), (299, 299))
             else:
                 return np.load(path)
 
