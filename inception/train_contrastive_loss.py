@@ -102,11 +102,10 @@ def _train(
                 left_labels, 1), tf.argmax(
                 right_labels, 1))
 
-        reg_op = FLAGS.beta * tf.add_n(tf.losses.get_regularization_losses())
         loss_op = _get_loss_op(
             left_features,
             right_features,
-            similarities) + reg_op
+            similarities)
         train_op = _get_train_op(loss_op, learning_rate, global_step)
 
         # Start a session
