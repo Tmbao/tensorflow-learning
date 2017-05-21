@@ -83,7 +83,8 @@ class Data:
         self._size = len(self._origin_objects)
         self._groups = [[] for _ in range(self._no_categories)]
         for idx in range(self._size):
-            self._groups[self._categories[idx]].append(self._origin_objects[idx])
+            self._groups[self._categories[idx]].append(
+                self._origin_objects[idx])
 
     def size(self):
         """
@@ -120,7 +121,8 @@ class Data:
             similar_images = []
             for category in categories:
                 group_size = len(self._groups[category])
-                similar_images.append(self._groups[category][random.randint(0, group_size - 1)])
+                similar_images.append(
+                    self._groups[category][random.randint(0, group_size - 1)])
             return np.array(similar_images)
 
         def _load_logits(categories):

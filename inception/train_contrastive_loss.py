@@ -53,7 +53,12 @@ def _get_feature_op(inputs):
 
 def _get_loss_op(left_logits, right_logits, similarities):
     loss_fn = contrastive_loss(FLAGS.margin)
-    return loss_fn(left_logits, right_logits, tf.cast(similarities, tf.float32))
+    return loss_fn(
+        left_logits,
+        right_logits,
+        tf.cast(
+            similarities,
+            tf.float32))
 
 
 def _get_train_op(loss_op, learning_rate, global_step):
@@ -129,7 +134,8 @@ def _train(
             train_dat.shuffle()
 
             for impostor in [True, False]:
-                for tr_left_inputs, tr_left_categories, tr_right_inputs, tr_right_catetories in train_dat.batches(FLAGS.batch_size, impostor=impostor):
+                for tr_left_inputs, tr_left_categories, tr_right_inputs, tr_right_catetories in train_dat.batches(
+                        FLAGS.batch_size, impostor=impostor):
                     # Create food
                     food = {
                         left_inputs: tr_left_inputs,
