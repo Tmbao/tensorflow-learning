@@ -95,7 +95,7 @@ class Data:
         idx = list(range(self._size))
         np.random.shuffle(idx)
         self._origin_objects = self._objects
-        self._origin_catetories = self._categories
+        self._origin_categories = self._categories
         self._objects = self._objects[idx]
         self._categories = self._categories[idx]
 
@@ -123,11 +123,11 @@ class Data:
         for start in range(0, no_examples, batch_size):
             yield (_load_images(self._origin_objects[start: min(no_examples, start +
                                                                batch_size)]),
-                   self._origin_catetories[start: min(
+                   self._origin_categories[start: min(
                        no_examples, start + batch_size)],
                    _load_images(self._objects[start: min(no_examples, start +
                                                         batch_size)]),
-                   self._catetories[start: min(no_examples, start + batch_size)])
+                   self._categories[start: min(no_examples, start + batch_size)])
 
     def _get_all_files(self, path, suffix):
         return np.array(sorted([os.path.join(path, name)
