@@ -172,7 +172,7 @@ def _train(
                             left_inputs: vl_left_inputs,
                             right_inputs: vl_right_inputs,
                             left_labels: vl_left_categories,
-                            right_labels: vl_right_catetories
+                            right_labels: vl_right_categories
                         }
 
                         loss_val, = sess.run([loss_op], feed_dict=food)
