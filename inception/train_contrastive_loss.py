@@ -53,7 +53,7 @@ def _get_feature_op(inputs):
 
 def _get_loss_op(left_logits, right_logits, similarities):
     loss_fn = contrastive_loss(FLAGS.margin)
-    return loss_fn(left_logits, right_logits, similarities.astype(float))
+    return loss_fn(left_logits, right_logits, tf.cast(similarities tf.float32))
 
 
 def _get_train_op(loss_op, learning_rate, global_step):
